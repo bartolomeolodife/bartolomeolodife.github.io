@@ -93,3 +93,4 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
   .list .hide-s{display:none}
 }
 @media (max-width:560px){ .cards,.gallery.g2,.gallery.g3,.gallery.g4{grid-template-columns:1fr} }
+.expo{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:0;font-size:15px}
