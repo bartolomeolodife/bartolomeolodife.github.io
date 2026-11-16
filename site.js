@@ -1,7 +1,8 @@
 // Ingrandimento delle immagini e trascinamento della timeline.
 (function(){
-  var lb = document.createElement('div'); lb.className = 'lb'; lb.setAttribute('role','dialog'); lb.setAttribute('aria-modal','true'); lb.setAttribute('aria-label','Immagine ingrandita');
-  lb.innerHTML = '<button type="button">Chiudi</button><img alt="">';
+  var L = {it:['Immagine ingrandita','Chiudi'], en:['Enlarged image','Close'], fr:['Image agrandie','Fermer']}[document.documentElement.lang] || ['Immagine ingrandita','Chiudi'];
+  var lb = document.createElement('div'); lb.className = 'lb'; lb.setAttribute('role','dialog'); lb.setAttribute('aria-modal','true'); lb.setAttribute('aria-label',L[0]);
+  lb.innerHTML = '<button type="button">'+L[1]+'</button><img alt="">';
   document.body.appendChild(lb);
   var big = lb.querySelector('img'), last = null;
   function close(){ lb.classList.remove('on'); big.removeAttribute('src'); if(last) last.focus(); }

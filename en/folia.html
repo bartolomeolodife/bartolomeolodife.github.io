@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folia | Bartolomeo Lodi-Fè</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: una riga di testa e una di piede con filetto, come nel PDF; al centro tre colonne su griglia a 12 (testo 3, oggetto 6, legenda 3). Tema unico chiaro, per scelta. */
+  color-scheme: light;
+  --paper:#ffffff;
+  --ink:#111111;
+  --mute:#7c7c7a;
+  --hair:#d9d9d6;
+  --bar:#111111;
+  --bar-ink:#ffffff;
+  --display:"Hanken Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --body:"Hanken Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --s1:12px; --s2:14px; --s3:17px; --s4:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-weight:300;font-size:var(--s2);line-height:1.35;-webkit-font-smoothing:antialiased}
+.page{min-height:100%;display:grid;grid-template-rows:auto 1fr auto;padding:0 24px}
+.rule{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;padding:10px 0;font-size:var(--s1)}
+.rule.top{border-bottom:1px solid var(--ink)}
+.rule.bottom{border-top:1px solid var(--ink)}
+.rule > :last-child{text-align:right}
+.bar{background:var(--bar);color:var(--bar-ink);padding:1px 6px 2px;display:inline-block}
+main{display:grid;grid-template-columns:repeat(12,1fr);gap:24px;min-height:0;padding:24px 0}
+.text{grid-column:1 / span 3;display:flex;flex-direction:column;gap:16px;justify-content:flex-end}
+.stage{grid-column:4 / span 6;position:relative;min-height:420px;touch-action:none;cursor:grab;outline-offset:4px}
+.stage:active{cursor:grabbing}
+.side{grid-column:10 / span 3;display:flex;flex-direction:column;gap:28px;justify-content:flex-end}
+h1{font-family:var(--display);font-weight:400;font-size:var(--s4);line-height:1;letter-spacing:-0.02em;text-wrap:balance}
+.meta{display:flex;flex-direction:column;gap:4px;font-size:var(--s1)}
+.meta span{display:block}
+p.lead{font-size:var(--s3);line-height:1.3;max-width:34ch}
+p.note{font-size:var(--s1);color:var(--mute);max-width:40ch}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:2px 3px;transform:translate(-50%,-50%);will-change:transform,opacity}
+.tag.on{background:var(--bar);color:var(--bar-ink)}
+.hint{position:absolute;left:0;bottom:0;font-size:var(--s1);color:var(--mute)}
+.group{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:var(--s1);color:var(--mute)}
+ol.parts{list-style:none;display:flex;flex-direction:column;border-top:1px solid var(--hair)}
+ol.parts button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:5px 0;border-bottom:1px solid var(--hair);cursor:pointer;font-variant-numeric:tabular-nums}
+ol.parts button:hover .nm,ol.parts button[aria-pressed="true"] .nm{background:var(--bar);color:var(--bar-ink)}
+ol.parts .nm{padding:0 4px;margin-left:-4px;justify-self:start}
+ol.parts .q{color:var(--mute)}
+button:focus-visible,input:focus-visible,.stage:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.slider{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:var(--s1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--ink)}
+input[type=range]::-moz-range-track{height:1px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--ink);margin-top:-5px;border:0;border-radius:0}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--ink);border:0;border-radius:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px 14px}
+.seg button{all:unset;cursor:pointer;padding:1px 6px 2px}
+.seg button[aria-pressed="true"]{background:var(--bar);color:var(--bar-ink)}
+.seg button:hover{text-decoration:underline}
+.seg button[aria-pressed="true"]:hover{text-decoration:none}
+.plain{all:unset;cursor:pointer;font-size:var(--s1);text-decoration:underline;align-self:flex-start}
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;color:var(--mute);padding:24px}
+@media (max-width:900px){
+  .page{padding:0 16px}
+  main{grid-template-columns:1fr;gap:20px}
+  .text,.stage,.side{grid-column:1}
+  .stage{height:62vh;min-height:360px;order:-1}
+  h1{font-size:40px}
+  .rule{grid-template-columns:1fr auto}
+  .rule .mid{display:none}
+}
+</style>
+<link rel="stylesheet" href="../site.css">
+<style>
+html,body{height:auto}
+.page{display:block;min-height:0}
+.page > main{min-height:calc(100vh - 41px)}
+.page > main .stage{min-height:max(520px, calc(100vh - 120px))}
+</style>
+
+<meta name="description" content="Folia, by Bartolomeo Lodi-Fè: devices that monitor aromatic plants, with an exploded 3D model.">
+<link rel="canonical" href="https://bartolomeolodife.github.io/en/folia.html">
+<link rel="alternate" hreflang="it" href="https://bartolomeolodife.github.io/folia.html">
+<link rel="alternate" hreflang="en" href="https://bartolomeolodife.github.io/en/folia.html">
+<link rel="alternate" hreflang="fr" href="https://bartolomeolodife.github.io/fr/folia.html">
+<link rel="alternate" hreflang="x-default" href="https://bartolomeolodife.github.io/folia.html">
+<meta property="og:title" content="Folia | Bartolomeo Lodi-Fè">
+<meta property="og:description" content="Folia, by Bartolomeo Lodi-Fè: devices that monitor aromatic plants, with an exploded 3D model.">
+<meta property="og:url" content="https://bartolomeolodife.github.io/en/folia.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bartolomeolodife.github.io/img/home/c-folia.jpg">
+<meta name="author" content="Bartolomeo Lodi-Fè"> <!-- /seo -->
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png"> <!-- /icons -->
+</head>
+<body>
+<div class="page">
+  <header class="rule top"><a href="index.html">Bartolomeo Lodi-Fè</a><span class="mid">Projects / Folia</span><nav><a href="index.html" aria-current="page">Projects</a><a href="percorso.html">Background</a><a href="percorso.html#contatti">Contact</a><span class="lang"><a href="../folia.html" hreflang="it" lang="it">IT</a><a href="folia.html" hreflang="en" lang="en" aria-current="true">EN</a><a href="../fr/folia.html" hreflang="fr" lang="fr">FR</a></span></nav></header>
+
+  <main>
+    <section class="text">
+      <div class="meta">
+        <span>2026</span>
+        <span>Product</span>
+        <span>Product Design II, mid-year exam</span>
+      </div>
+      <h1>Folia</h1>
+      <p class="lead">A family of devices that monitors aromatic plants. It turns the plant’s health into three emotions you can read at a glance.</p>
+      
+    </section>
+
+    <section class="stage" id="stage" tabindex="0" aria-label="3D model of the Folia device. Drag to rotate.">
+      <canvas id="c"></canvas>
+      <div class="tags" id="tags"></div>
+      <div class="hint">Drag to rotate. Scroll or pinch to zoom.</div>
+      <div class="err" id="err">The 3D model could not start on this device.</div>
+    </section>
+
+    <aside class="side">
+      <div class="group">
+        <span class="eyebrow">Components, front to back</span>
+        <ol class="parts" id="parts"></ol>
+      </div>
+      <div class="group">
+        <span class="eyebrow">Exploded</span>
+        <div class="slider">
+          <label for="explode">Closed</label>
+          <input id="explode" type="range" min="0" max="100" value="0" step="1" aria-label="Explosion amount">
+          <span>Open</span>
+        </div>
+      </div>
+      <div class="group">
+        <span class="eyebrow">Plant status</span>
+        <div class="seg" id="faces">
+          <button type="button" data-f="0" aria-pressed="true">Healthy</button>
+          <button type="button" data-f="1" aria-pressed="false">At risk</button>
+          <button type="button" data-f="2" aria-pressed="false">Wilted</button>
+        </div>
+      </div>
+      <button type="button" class="plain" id="reset">Reset the view</button>
+    </aside>
+  </main>
+
+  <section class="block grid" id="progetto">
+<div class="span3 col"><h2>The project</h2><div class="meta"><span>Product Design II, mid-year exam</span><span>ISIA Roma Design</span></div></div>
+<div class="span9"><div class="body">
+<p><b>The goal.</b> Aromatic plants are now a constant presence in our homes, chosen even by people with no gardening skills. Many of those bought in supermarkets do not survive their first two weeks: a gesture of wellbeing turns into an experience of waste. Folia was born to fill this gap, with an intuitive tool that supports everyday care.</p>
+<p><b>What it does.</b> The devices read light, temperature and soil moisture and show the plant’s condition through a simple visual language: three expressions, healthy, at risk, wilted. They do more than collect data: they become quiet companions that encourage a more mindful relationship between people and nature.</p>
+<p><b>Technical features.</b> Inside are a main board with a microcontroller, soil moisture, light and temperature sensors, a small display and a battery. The project is fully engineered, taking every internal component into account.</p>
+</div></div>
+</section><section class="block grid" id="contesto">
+<div class="span3 col"><h2>In context</h2><p class="note">Contextual renders: Folia in the pot, in the plant’s different states.</p></div>
+<div class="span9"><div class="gallery g2 crop"><figure><img src="../img/folia/ctx-2.jpg" alt="Healthy basil" loading="lazy"><figcaption>Healthy basil</figcaption></figure><figure><img src="../img/folia/ctx-1.jpg" alt="The sensor in the soil" loading="lazy"><figcaption>The sensor in the soil</figcaption></figure><figure><img src="../img/folia/ctx-5.jpg" alt="Rosemary" loading="lazy"><figcaption>Rosemary</figcaption></figure><figure><img src="../img/folia/ctx-4.jpg" alt="Wilted plant" loading="lazy"><figcaption>Wilted plant</figcaption></figure><figure><img src="../img/folia/ctx-3.jpg" alt="The three devices" loading="lazy"><figcaption>The three devices</figcaption></figure></div></div>
+</section><section class="block grid" id="render">
+<div class="span3 col"><h2>Renders</h2><p class="note">The renders presented at the exam.</p></div>
+<div class="span9"><div class="gallery g3 crop"><figure><img src="../img/folia/render-1.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-2.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-3.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-4.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-5.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-6.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-7.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-8.jpg" alt="" loading="lazy"></figure><figure><img src="../img/folia/render-9.jpg" alt="" loading="lazy"></figure></div></div>
+</section><section class="block grid" id="tavole">
+<div class="span3 col"><h2>Boards</h2><p class="note">The nine technical boards. Click to enlarge.</p></div>
+<div class="span9"><div class="gallery g3 tavola"><figure><img src="../img/folia/tav-1.jpg" alt="Board 1" loading="lazy"><figcaption>Board 1</figcaption></figure><figure><img src="../img/folia/tav-2.jpg" alt="Board 2" loading="lazy"><figcaption>Board 2</figcaption></figure><figure><img src="../img/folia/tav-3.jpg" alt="Board 3" loading="lazy"><figcaption>Board 3</figcaption></figure><figure><img src="../img/folia/tav-4.jpg" alt="Board 4" loading="lazy"><figcaption>Board 4</figcaption></figure><figure><img src="../img/folia/tav-5.jpg" alt="Board 5" loading="lazy"><figcaption>Board 5</figcaption></figure><figure><img src="../img/folia/tav-6.jpg" alt="Board 6" loading="lazy"><figcaption>Board 6</figcaption></figure><figure><img src="../img/folia/tav-7.jpg" alt="Board 7" loading="lazy"><figcaption>Board 7</figcaption></figure><figure><img src="../img/folia/tav-8.jpg" alt="Board 8" loading="lazy"><figcaption>Board 8</figcaption></figure><figure><img src="../img/folia/tav-9.jpg" alt="Board 9" loading="lazy"><figcaption>Board 9</figcaption></figure></div></div>
+</section>
+<footer class="rule bottom">
+    <span>Portfolio 2026</span>
+    <span class="mid">Folia</span>
+    <span>Bartolomeo Lodi-Fè</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="../models/meshopt_decoder.js"></script>
+<script>
+(function(){
+  var MODEL_URL = "../models/folia.glb";
+
+  // Parti: nome nel file Fusion -> etichetta, e spostamento in mm (x destra, y alto, z verso chi guarda).
+  var PARTS = [
+    {n:'01', label:'Screen',          q:'',   re:/^schermo/i,       d:[0,0,84]},
+    {n:'02', label:'Upper shell', q:'',   re:/^scocca_sup/i,    d:[0,0,56]},
+    {n:'03', label:'Battery',         q:'',   re:/^batteria/i,      d:[0,0,32]},
+    {n:'04', label:'Board screws',      q:'×4', re:/^91305/i,         d:[0,0,21]},
+    {n:'05', label:'Main board',     q:'',   re:/^scheda_madre/i,  d:[0,0,9]},
+    {n:'06', label:'Lower shell', q:'',   re:/^scocca_inf/i,    d:[0,0,-26]},
+    {n:'07', label:'Button',            q:'',   re:/^tasto/i,         d:[0,0,-44]},
+    {n:'08', label:'Shell screws',      q:'×5', re:/^92010/i,         d:[0,0,-62]},
+    {n:'09', label:'Sensor probe',     q:'',   re:/^asta/i,          d:[0,-36,0]}
+  ];
+
+  var stage = document.getElementById('stage');
+  var canvas = document.getElementById('c');
+  var tagsEl = document.getElementById('tags');
+  var slider = document.getElementById('explode');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function fail(){ document.getElementById('err').style.display='flex'; }
+  if(!window.THREE){ fail(); return; }
+
+  var renderer;
+  try{ renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true}); }
+  catch(e){ fail(); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.95;
+  renderer.setClearColor(0xffffff, 0);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(26, 1, 10, 5000);
+  var HOME = new THREE.Vector3(0.95, 0.22, 1).normalize().multiplyScalar(640);
+  camera.position.copy(HOME);
+
+  var controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  controls.enablePan = false; controls.minDistance = 260; controls.maxDistance = 1300;
+
+  // Ambiente di luce costruito a mano: una stanza chiara con pannelli luminosi, per dare riflessi a metallo e plastica nera.
+  (function(){
+    var env = new THREE.Scene();
+    var room = new THREE.Mesh(new THREE.BoxGeometry(10,10,10), new THREE.MeshBasicMaterial({color:0x3a3a3a, side:THREE.BackSide}));
+    env.add(room);
+    function panel(x,y,z,w,h,i){
+      var m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color:new THREE.Color(i,i,i), side:THREE.DoubleSide}));
+      m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m);
+    }
+    panel(0,4.8,0,6,6,2.2);      // soffitto
+    panel(-4.8,1,1,2.5,6,1.8);     // sinistra
+    panel(4.8,0,2,1.5,7,1.2);      // destra
+    panel(0,1,4.8,5,1.5,0.8);      // fronte
+    panel(0,-1,-4.8,8,3,1.4);    // retro
+    var pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(env, 0.03).texture;
+    pm.dispose();
+  })();
+  var key = new THREE.DirectionalLight(0xffffff, 0.55); key.position.set(-300,400,500); scene.add(key);
+
+  var MAT = {
+    body:   {color:0x0f0f0f, metalness:0.0, roughness:0.62},
+    screen: {color:0x262626, metalness:0.0, roughness:0.25},
+    pcb:    {color:0x14502a, metalness:0.0, roughness:0.5},
+    steel:  {color:0xb9b9b9, metalness:1.0, roughness:0.35},
+    nickel: {color:0xd8d2c4, metalness:1.0, roughness:0.22},
+    alu:    {color:0xe2e2e2, metalness:1.0, roughness:0.28}
+  };
+  var MATOF = {'01':'screen','02':'body','03':'nickel','04':'steel','05':'pcb','06':'body','07':'body','08':'steel','09':'alu'};
+
+  var root = new THREE.Group(); scene.add(root);
+  var t = 0, target = 0, active = null;
+  var faceHolder = new THREE.Group(); scene.add(faceHolder);
+  var faceTex, faceCanvas = document.createElement('canvas'); faceCanvas.width = faceCanvas.height = 256;
+
+  function drawFace(k){
+    var g = faceCanvas.getContext('2d');
+    g.clearRect(0,0,256,256);
+    g.strokeStyle = '#f4f4f2'; g.lineWidth = 7; g.lineCap = 'round'; g.lineJoin = 'round';
+    function line(pts){ g.beginPath(); g.moveTo(pts[0],pts[1]); for(var i=2;i<pts.length;i+=2) g.lineTo(pts[i],pts[i+1]); g.stroke(); }
+    if(k===0){
+      line([62,104, 84,82, 106,104]); line([150,104, 172,82, 194,104]);
+      g.beginPath(); g.arc(128,170,15,0,Math.PI*2); g.stroke();
+    } else if(k===1){
+      line([58,92, 106,98]); line([150,98, 198,92]);
+      line([108,172, 150,166]);
+    } else {
+      line([62,78, 104,104]); line([152,104, 194,78]);
+      g.beginPath();
+      for(var x=0;x<=80;x+=2){ var y=170+Math.sin(x/80*Math.PI*4)*9; if(x===0) g.moveTo(88+x,y); else g.lineTo(88+x,y); }
+      g.stroke();
+    }
+    if(faceTex) faceTex.needsUpdate = true;
+  }
+
+  function b64ToBuffer(b){
+    var s = atob(b), n = s.length, u = new Uint8Array(n);
+    for(var i=0;i<n;i++) u[i] = s.charCodeAt(i);
+    return u.buffer;
+  }
+
+  (function(){ var l = new THREE.GLTFLoader(); if(window.MeshoptDecoder) l.setMeshoptDecoder(window.MeshoptDecoder); return l; })().load(MODEL_URL, function(gltf){
+    root.add(gltf.scene);
+    root.scale.setScalar(1000);          // metri -> millimetri
+    root.rotation.z = Math.PI;           // asta verso il basso, schermo verso chi guarda
+    root.updateMatrixWorld(true);
+    var box = new THREE.Box3().setFromObject(root);
+    var c = box.getCenter(new THREE.Vector3());
+    root.position.sub(c);
+    root.updateMatrixWorld(true);
+
+    // Il nodo che contiene tutti i componenti.
+    var asm = null;
+    gltf.scene.traverse(function(o){ if(!asm && /^schermo/i.test(o.name)) asm = o.parent; });
+    if(!asm){ fail(); return; }
+    var inv3 = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().copy(asm.matrixWorld).invert());
+
+    PARTS.forEach(function(p){
+      p.nodes = []; p.mats = [];
+      var m = new THREE.MeshStandardMaterial(MAT[MATOF[p.n]]);
+      m.envMapIntensity = 1.0;
+      asm.children.forEach(function(ch){
+        if(!p.re.test(ch.name)) return;
+        var local = new THREE.Vector3(p.d[0],p.d[1],p.d[2]).applyMatrix3(inv3);
+        p.nodes.push({o:ch, base:ch.position.clone(), d:local});
+        ch.traverse(function(o){ if(o.isMesh){ o.material = m; } });
+      });
+      p.mat = m;
+      p.center = p.nodes.length ? new THREE.Box3().setFromObject(p.nodes[0].o).getCenter(new THREE.Vector3()) : new THREE.Vector3();
+      p.dw = new THREE.Vector3(p.d[0],p.d[1],p.d[2]);
+    });
+
+    // Faccina sul display: un piano appena sopra lo schermo, che lo segue nell'esploso.
+    drawFace(0);
+    faceTex = new THREE.CanvasTexture(faceCanvas); faceTex.encoding = THREE.sRGBEncoding; faceTex.anisotropy = 4;
+    var face = new THREE.Mesh(new THREE.PlaneGeometry(25,25), new THREE.MeshBasicMaterial({map:faceTex, transparent:true, toneMapped:false, depthWrite:false}));
+    face.position.z = 1.15;
+    faceHolder.add(face);
+
+    buildLegend();
+    apply(0);
+    if(!reduce){ setTimeout(function(){ setTarget(1); }, 700); }
+    else { setTarget(1); t = 1; apply(1); }
+  }, undefined, function(){ fail(); });
+
+  function apply(k){
+    PARTS.forEach(function(p){
+      if(!p.nodes) return;
+      p.nodes.forEach(function(nd){ nd.o.position.copy(nd.base).addScaledVector(nd.d, k); });
+    });
+    var s = PARTS[0];
+    if(s.center) faceHolder.position.copy(s.center).addScaledVector(s.dw, k);
+  }
+
+  function setTarget(v){ target = v; slider.value = Math.round(v*100); }
+  slider.addEventListener('input', function(){ target = slider.value/100; if(reduce){ t = target; apply(t); } });
+
+  function setActive(n){
+    active = n;
+    PARTS.forEach(function(p){
+      if(!p.mat) return;
+      var dim = active && p.n !== active;
+      p.mat.transparent = !!dim; p.mat.opacity = dim ? 0.07 : 1; p.mat.depthWrite = !dim; p.mat.needsUpdate = true;
+      if(p.tag) p.tag.classList.toggle('on', p.n === active);
+      if(p.btn) p.btn.setAttribute('aria-pressed', p.n === active ? 'true' : 'false');
+    });
+    faceHolder.visible = !active || active === '01';
+  }
+
+  function buildLegend(){
+    var ol = document.getElementById('parts');
+    PARTS.forEach(function(p){
+      var li = document.createElement('li');
+      var b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-pressed','false');
+      b.innerHTML = '<span>'+p.n+'</span><span class="nm">'+p.label+'</span><span class="q">'+p.q+'</span>';
+      var pinned = false;
+      b.addEventListener('mouseenter', function(){ if(!ol.dataset.pin) setActive(p.n); });
+      b.addEventListener('mouseleave', function(){ if(!ol.dataset.pin) setActive(null); });
+      b.addEventListener('focus', function(){ if(!ol.dataset.pin) setActive(p.n); });
+      b.addEventListener('blur', function(){ if(!ol.dataset.pin) setActive(null); });
+      b.addEventListener('click', function(){
+        if(ol.dataset.pin === p.n){ delete ol.dataset.pin; setActive(null); }
+        else { ol.dataset.pin = p.n; setActive(p.n); if(target < 0.5) setTarget(1); }
+      });
+      li.appendChild(b); ol.appendChild(li); p.btn = b;
+      var tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = p.n; tagsEl.appendChild(tg); p.tag = tg;
+    });
+  }
+
+  document.getElementById('faces').addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    Array.prototype.forEach.call(this.children, function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    drawFace(+b.dataset.f);
+  });
+  document.getElementById('reset').addEventListener('click', function(){ camera.position.copy(HOME); controls.target.set(0,0,0); controls.update(); });
+
+  var W = 0, H = 0;
+  function resize(){
+    var r = stage.getBoundingClientRect();
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    renderer.setSize(W, H, false);
+    camera.aspect = W/H;
+    // Su schermi stretti allontana la camera perché l'oggetto resti intero.
+    camera.fov = W/H < 0.8 ? 34 : 26;
+    camera.updateProjectionMatrix();
+  }
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+  window.addEventListener('resize', resize); resize();
+
+  var v = new THREE.Vector3();
+  function frame(){
+    requestAnimationFrame(frame);
+    if(Math.abs(target - t) > 0.0005){ t += (target - t) * 0.09; apply(t); }
+    controls.update();
+    renderer.render(scene, camera);
+    var show = Math.min(1, Math.max(0, (t - 0.25) / 0.4));
+    for(var i=0;i<PARTS.length;i++){
+      var p = PARTS[i]; if(!p.tag || !p.center) continue;
+      v.copy(p.center).addScaledVector(p.dw, t).project(camera);
+      var x = (v.x*0.5+0.5)*W, y = (-v.y*0.5+0.5)*H;
+      p.tag.style.transform = 'translate('+(x+ (i%2 ? -30 : 30)).toFixed(1)+'px,'+(y-14).toFixed(1)+'px) translate(-50%,-50%)';
+      p.tag.style.opacity = (active && p.n !== active) ? show*0.25 : show;
+    }
+  }
+  frame();
+})();
+</script>
+<script src="../site.js"></script>
+</body>
+</html>

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trabucco | Bartolomeo Lodi-Fè</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Layout: come la pagina di Folia. Testa e piede con filetto, corpo su griglia a 12 (testo 3, oggetto 6, legenda 3). Tema unico chiaro. */
+  color-scheme: light;
+  --paper:#ffffff;
+  --ink:#111111;
+  --mute:#6f6f6d;
+  --hair:#d9d9d6;
+  --display:"Hanken Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --body:"Hanken Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --s1:12px; --s2:14px; --s3:17px; --s4:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-weight:300;font-size:var(--s2);line-height:1.35;-webkit-font-smoothing:antialiased}
+.page{min-height:100%;display:grid;grid-template-rows:auto 1fr auto;padding:0 24px}
+.rule{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;padding:10px 0;font-size:var(--s1)}
+.rule.top{border-bottom:1px solid var(--ink)}
+.rule.bottom{border-top:1px solid var(--ink)}
+.rule > :last-child{text-align:right}
+.bar{background:var(--ink);color:var(--paper);padding:1px 6px 2px;display:inline-block}
+main{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;min-height:0;padding:24px 0}
+.text{grid-column:1 / span 3;display:flex;flex-direction:column;gap:16px;justify-content:flex-end}
+.stage{grid-column:4 / span 6;position:relative;min-height:520px;touch-action:none;cursor:grab;outline-offset:4px}
+.stage:active{cursor:grabbing}
+.side{grid-column:10 / span 3;display:flex;flex-direction:column;gap:28px;justify-content:flex-end}
+h1{font-family:var(--display);font-weight:400;font-size:var(--s4);line-height:1;letter-spacing:-0.02em}
+.meta{display:flex;flex-direction:column;gap:4px;font-size:var(--s1)}
+p.lead{font-size:var(--s3);line-height:1.3;max-width:34ch}
+p.note{font-size:var(--s1);color:var(--mute);max-width:40ch}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.tags{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1;background:var(--paper);color:var(--ink);border:1px solid var(--ink);padding:2px 3px;will-change:transform,opacity}
+.tag.on{background:var(--ink);color:var(--paper)}
+.hint{position:absolute;left:0;bottom:0;font-size:var(--s1);color:var(--mute)}
+.load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:var(--s1);color:var(--mute)}
+.group{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-size:var(--s1);color:var(--mute)}
+ol.parts{list-style:none;display:flex;flex-direction:column;border-top:1px solid var(--hair)}
+ol.parts button{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:4px 0;border-bottom:1px solid var(--hair);cursor:pointer;font-variant-numeric:tabular-nums}
+ol.parts button:hover .nm,ol.parts button[aria-pressed="true"] .nm{background:var(--ink);color:var(--paper)}
+ol.parts .nm{padding:0 4px;margin-left:-4px;justify-self:start}
+ol.parts .q{color:var(--mute)}
+button:focus-visible,input:focus-visible,.stage:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.slider{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:var(--s1)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--ink)}
+input[type=range]::-moz-range-track{height:1px;background:var(--ink)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;background:var(--ink);margin-top:-5px;border:0;border-radius:0}
+input[type=range]::-moz-range-thumb{width:11px;height:11px;background:var(--ink);border:0;border-radius:0}
+.sw-tabs{display:flex;gap:14px;font-size:var(--s1)}
+.sw-tabs button{all:unset;cursor:pointer;padding:1px 6px 2px;margin-left:-6px}
+.sw-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.sw{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.sw button{all:unset;cursor:pointer;aspect-ratio:1;display:block;background-size:cover;outline-offset:1px}
+.sw button[aria-pressed="true"]{outline:2px solid var(--ink)}
+.sw button:hover{outline:1px solid var(--ink)}
+.sw-name{font-size:var(--s1);min-height:1.35em;font-variant-numeric:tabular-nums}
+.plain{all:unset;cursor:pointer;font-size:var(--s1);text-decoration:underline;align-self:flex-start}
+.err{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;color:var(--mute);padding:24px}
+@media (max-width:1000px){
+  .page{padding:0 16px}
+  main{grid-template-columns:1fr;gap:20px}
+  .text,.stage,.side{grid-column:1}
+  .stage{height:62vh;min-height:360px;order:-1}
+  h1{font-size:40px}
+  .rule{grid-template-columns:1fr auto}
+  .rule .mid{display:none}
+}
+</style>
+<link rel="stylesheet" href="../site.css">
+<style>
+html,body{height:auto}
+.page{display:block;min-height:0}
+.page > main{min-height:calc(100vh - 41px)}
+.page > main .stage{min-height:max(520px, calc(100vh - 120px))}
+</style>
+
+<meta name="description" content="Trabucco, by Bartolomeo Lodi-Fè: a wooden cabinet with shelves held by nautical cables, for the Ideas for Wood competition by Carpanelli and Tabù.">
+<link rel="canonical" href="https://bartolomeolodife.github.io/en/trabucco.html">
+<link rel="alternate" hreflang="it" href="https://bartolomeolodife.github.io/trabucco.html">
+<link rel="alternate" hreflang="en" href="https://bartolomeolodife.github.io/en/trabucco.html">
+<link rel="alternate" hreflang="fr" href="https://bartolomeolodife.github.io/fr/trabucco.html">
+<link rel="alternate" hreflang="x-default" href="https://bartolomeolodife.github.io/trabucco.html">
+<meta property="og:title" content="Trabucco | Bartolomeo Lodi-Fè">
+<meta property="og:description" content="Trabucco, by Bartolomeo Lodi-Fè: a wooden cabinet with shelves held by nautical cables, for the Ideas for Wood competition by Carpanelli and Tabù.">
+<meta property="og:url" content="https://bartolomeolodife.github.io/en/trabucco.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bartolomeolodife.github.io/img/home/c-folia.jpg">
+<meta name="author" content="Bartolomeo Lodi-Fè"> <!-- /seo -->
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png"> <!-- /icons -->
+</head>
+<body>
+<div class="page">
+  <header class="rule top"><a href="index.html">Bartolomeo Lodi-Fè</a><span class="mid">Projects / Trabucco</span><nav><a href="index.html" aria-current="page">Projects</a><a href="percorso.html">Background</a><a href="percorso.html#contatti">Contact</a><span class="lang"><a href="../trabucco.html" hreflang="it" lang="it">IT</a><a href="trabucco.html" hreflang="en" lang="en" aria-current="true">EN</a><a href="../fr/trabucco.html" hreflang="fr" lang="fr">FR</a></span></nav></header>
+
+  <main>
+    <section class="text">
+      <div class="meta">
+        <span>2026</span>
+        <span>Product</span>
+        <span>Product Design II, Ideas for Wood competition</span>
+      </div>
+      <h1>Trabucco</h1>
+      <p class="lead">A wooden cabinet whose shelves hang from nautical cables stretched from a pole, like the fishing machines it is named after.</p>
+      <p class="note">The model is the project’s Fusion file. Choose a veneer for the body or the shelves from the Tabù 555 collection: the average colour comes from the sample on Tabù’s website, the grain is drawn according to the cut (straight, crown, rotary).</p>
+    </section>
+
+    <section class="stage" id="stage" tabindex="0" aria-label="3D model of the Trabucco cabinet. Drag to rotate.">
+      <canvas id="c"></canvas>
+      <div class="tags" id="tags"></div>
+      <div class="load" id="load">Loading the model…</div>
+      <div class="hint">Drag to rotate. Scroll or pinch to zoom.</div>
+      <div class="err" id="err">The 3D model could not start on this device.</div>
+    </section>
+
+    <aside class="side">
+      <div class="group">
+        <span class="eyebrow">Components</span>
+        <ol class="parts" id="parts"></ol>
+      </div>
+      <div class="group">
+        <span class="eyebrow">Exploded</span>
+        <div class="slider">
+          <label for="explode">Closed</label>
+          <input id="explode" type="range" min="0" max="100" value="0" step="1" aria-label="Explosion amount">
+          <span>Open</span>
+        </div>
+      </div>
+      <div class="group">
+        <span class="eyebrow">Tabù veneers</span>
+        <div class="sw-tabs" id="swTarget">
+          <button type="button" data-t="fusto" aria-pressed="true">Body and drawer</button>
+          <button type="button" data-t="mensole" aria-pressed="false">Shelves</button>
+        </div>
+        <div class="sw" id="sw" role="group" aria-label="Choose the veneer"></div>
+        <span class="sw-name" id="swName">Original, as in the Fusion file</span>
+      </div>
+      <button type="button" class="plain" id="reset">Reset the view</button>
+    </aside>
+  </main>
+
+  <section class="block grid" id="progetto">
+<div class="span3 col"><h2>The project</h2><div class="meta"><span>Product Design II exam</span><span>Prof. Massimiliano Datti</span><span>Ideas for Wood competition, Carpanelli and Tabù</span></div></div>
+<div class="span9"><div class="body">
+<p>A project for Professor Massimiliano Datti’s Product Design II course, for the Ideas for Wood 2025/26 competition by Carpanelli, a fine cabinetmaking company, together with Tabù, a maker of precious wood veneers. The theme, “A New Touch of Elegance”, asked for a living-room piece with wood as its main material.</p>
+<p><b>A centuries-old tension system.</b> The trabucco is an ancient fishing machine from the coast of Apulia: a wooden platform reaching out over the sea, balanced by cables and counterweights. The cabinet follows the same logic: the shelves extend from the central body, held by braided steel nautical cables stretched from the top to the end of each shelf. Steel clamps lock the cable at every shelf.</p>
+<p><b>Lightness and customisation.</b> The inner structure is a honeycomb core enclosed by a perimeter frame, which reduces weight while keeping stiffness. Outside, the plywood is covered with Tabù veneers, chosen species by species. The cylindrical body hides a compartment reached through a sliding drawer.</p>
+</div></div>
+</section><section class="block grid" id="contesto">
+<div class="span3 col"><h2>In context</h2><p class="note">Contextual renders: the cabinet in the space it was designed for.</p></div>
+<div class="span9"><div class="gallery g2 crop"><figure><img src="../img/trabucco/ctx-1.jpg" alt="The cabinet in a double-height living room" loading="lazy"><figcaption>The cabinet in a double-height living room</figcaption></figure><figure><img src="../img/trabucco/ctx-2.jpg" alt="Overall view" loading="lazy"><figcaption>Overall view</figcaption></figure><figure><img src="../img/trabucco/ctx-3.jpg" alt="Warm sunset light" loading="lazy"><figcaption>Warm sunset light</figcaption></figure></div></div>
+</section><section class="block grid" id="tavole">
+<div class="span3 col"><h2>Boards</h2><p class="note">The four project boards. Click to enlarge.</p></div>
+<div class="span9"><div class="gallery g2 tavola"><figure><img src="../img/trabucco/tav-1.jpg" alt="Board 1" loading="lazy"><figcaption>Board 1</figcaption></figure><figure><img src="../img/trabucco/tav-2.jpg" alt="Board 2" loading="lazy"><figcaption>Board 2</figcaption></figure><figure><img src="../img/trabucco/tav-3.jpg" alt="Board 3" loading="lazy"><figcaption>Board 3</figcaption></figure><figure><img src="../img/trabucco/tav-4.jpg" alt="Board 4" loading="lazy"><figcaption>Board 4</figcaption></figure></div></div>
+</section>
+<footer class="rule bottom">
+    <span>Portfolio 2026</span>
+    <span class="mid">Trabucco</span>
+    <span>Bartolomeo Lodi-Fè</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="../models/meshopt_decoder.js"></script>
+<script>
+(function(){
+  var MODEL_URL = "../models/trabucco.glb";
+
+  // Gruppi di componenti: nome nel file Fusion -> etichetta, materiale e spostamento nell'esploso (mm; x larghezza, y alto, z verso il fronte del cassetto).
+  // side: lo spostamento in x cambia segno a seconda del lato su cui sta il pezzo.
+  var PARTS = [
+    {n:'01', label:'Pole',                      re:/^PALO/i,                    mat:'steel',  d:[0,520,0]},
+    {n:'02', label:'Cable hooks and screws',   re:/^(AGGANCI|VITE[ _]+SUPERIORE)/i, mat:'steel',  d:[0,300,0]},
+    {n:'03', label:'Nautical cables',   q:'×2',    re:/^CAVO/i,                    mat:'rope',   d:[260,0,0], side:true},
+    {n:'04', label:'Body',                     re:/^STRUTTURA[ _]+MOBILE/i,        mat:'walnut', d:[0,0,0]},
+    {n:'05', label:'Body veneer',      re:/^PIALLACCIO[ _]+MOBILE/i,       mat:'walnutL',d:[650,0,350]},
+    {n:'06', label:'Drawer',                  re:/^(STRUTTURA[ _]+CASSETTO|PIALLACCIO[ _]+CASSETTO)/i, mat:'walnut', d:[0,0,-1400]},
+    {n:'07', label:'Drawer runners', q:'×4',re:/^CARRELLO/i,                mat:'steel',  d:[0,0,-950]},
+    {n:'08', label:'Shelves',        q:'×3',    re:/^MENSO/i,                   mat:'maple',  d:[0,0,0]},
+    {n:'09', label:'Honeycomb core panel',    re:/ALVEOLATURA/i,              mat:'paper',  d:[0,150,0]},
+    {n:'10', label:'Shelf veneer', q:'×3', re:/^PIALLACCIO[ _]+MENSOLA/i, mat:'cherry', d:[0,300,0]},
+    {n:'11', label:'Shelf stops', q:'×6', re:/^STOP/i,                  mat:'steel',  d:[160,0,0], side:true}
+  ];
+  var MAT = {
+    walnut: {color:0x5b3b22, metalness:0, roughness:0.55},
+    walnutL:{color:0x6b4528, metalness:0, roughness:0.5},
+    cherry: {color:0xa86e45, metalness:0, roughness:0.5},
+    maple:  {color:0xd2b48c, metalness:0, roughness:0.55},
+    paper:  {color:0xece6d8, metalness:0, roughness:0.9},
+    steel:  {color:0xbdbdbd, metalness:1, roughness:0.35},
+    rope:   {color:0x2a2a2a, metalness:0.2, roughness:0.6}
+  };
+
+  var stage = document.getElementById('stage');
+  var canvas = document.getElementById('c');
+  var tagsEl = document.getElementById('tags');
+  var slider = document.getElementById('explode');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function fail(){ document.getElementById('err').style.display='flex'; document.getElementById('load').style.display='none'; }
+  if(!window.THREE){ fail(); return; }
+
+  var renderer;
+  try{ renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true}); }
+  catch(e){ fail(); return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.setClearColor(0xffffff, 0);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(28, 1, 50, 60000);
+  var controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.08; controls.enablePan = true; controls.screenSpacePanning = true;
+
+  (function(){
+    var env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.BoxGeometry(10,10,10), new THREE.MeshBasicMaterial({color:0x5a5a5a, side:THREE.BackSide})));
+    function panel(x,y,z,w,h,i){ var m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color:new THREE.Color(i,i,i), side:THREE.DoubleSide})); m.position.set(x,y,z); m.lookAt(0,0,0); env.add(m); }
+    panel(0,4.8,0,6,6,2.4); panel(-4.8,1,1,2.5,6,1.8); panel(4.8,0,2,1.5,7,1.1); panel(0,1,4.8,5,1.5,0.9); panel(0,-1,-4.8,8,3,1.3);
+    var pm = new THREE.PMREMGenerator(renderer); scene.environment = pm.fromScene(env, 0.03).texture; pm.dispose();
+  })();
+  var key = new THREE.DirectionalLight(0xffffff, 0.8); key.position.set(-2000,4000,3000); scene.add(key);
+
+  var root = new THREE.Group(); scene.add(root);
+  var t = 0, target = 0, active = null, HOME = null, CENTER = new THREE.Vector3();
+
+  function b64ToBuffer(b){ var s = atob(b), n = s.length, u = new Uint8Array(n); for(var i=0;i<n;i++) u[i] = s.charCodeAt(i); return u.buffer; }
+
+  (function(){ var l = new THREE.GLTFLoader(); if(window.MeshoptDecoder) l.setMeshoptDecoder(window.MeshoptDecoder); return l; })().load(MODEL_URL, function(gltf){
+    root.add(gltf.scene);
+    root.scale.setScalar(1000);          // metri -> millimetri
+    root.rotation.x = -Math.PI/2;        // nel file l'alto è Z
+    root.updateMatrixWorld(true);
+    var box = new THREE.Box3().setFromObject(root);
+    box.getCenter(CENTER);
+    root.position.sub(CENTER); root.position.y += (box.max.y-box.min.y)/2 - (CENTER.y - box.min.y); // centro sul volume
+    root.updateMatrixWorld(true);
+    box = new THREE.Box3().setFromObject(root); box.getCenter(CENTER);
+
+    var asm = null;
+    gltf.scene.traverse(function(o){ if(!asm && /^PALO/i.test(o.name)) asm = o.parent; });
+    if(!asm){ fail(); return; }
+    var inv3 = new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().copy(asm.matrixWorld).invert());
+
+    PARTS.forEach(function(p){
+      p.nodes = [];
+      var m = new THREE.MeshStandardMaterial(MAT[p.mat]); m.envMapIntensity = 1.0; p.mat3 = m;
+      var acc = new THREE.Vector3(), cnt = 0;
+      asm.children.forEach(function(ch){
+        if(!p.re.test(ch.name.trim())) return;
+        var b = new THREE.Box3().setFromObject(ch), c = b.getCenter(new THREE.Vector3());
+        var dw = new THREE.Vector3(p.d[0],p.d[1],p.d[2]);
+        if(p.side && c.x < CENTER.x) dw.x = -dw.x;
+        p.nodes.push({o:ch, base:ch.position.clone(), d:dw.clone().applyMatrix3(inv3), dw:dw, c:c});
+        acc.add(c); cnt++;
+        ch.traverse(function(o){ if(o.isMesh){ o.material = m; o.castShadow = false; } });
+      });
+      p.center = cnt ? acc.multiplyScalar(1/cnt) : new THREE.Vector3();
+      p.dAvg = new THREE.Vector3(); p.nodes.forEach(function(nd){ p.dAvg.add(nd.dw); }); if(cnt) p.dAvg.multiplyScalar(1/cnt);
+    });
+
+    // vista iniziale: tre quarti, con le mensole che sporgono verso chi guarda
+    var r = box.getSize(new THREE.Vector3()).length()*0.5;
+    var dist = r / Math.sin(THREE.MathUtils.degToRad(camera.fov*0.5)) * 1.18;
+    HOME = {p: CENTER.clone().add(new THREE.Vector3(1.0, 0.45, 0.75).normalize().multiplyScalar(dist)), t: CENTER.clone()};
+    camera.position.copy(HOME.p); controls.target.copy(HOME.t);
+    controls.minDistance = r*0.3; controls.maxDistance = dist*3;
+    resize();
+
+    buildLegend();
+    document.getElementById('load').style.display='none';
+    apply(0);
+    if(!reduce){ setTimeout(function(){ setTarget(1); }, 800); } else { setTarget(1); t = 1; apply(1); }
+  }, undefined, function(){ fail(); });
+
+  // ---------- Piallacci Tabù ----------
+  // [famiglia, nome e codice, taglio, colore medio del campione sul sito Tabù]
+  var TABU = [
+    ['Cream White','Taba Frisè L1.S.050','Straight',[245,243,242]],
+    ['Beige','Noce Canaletto 51.029','Crown',[196,172,146]],
+    ['Beige','Movingui Frisé D5.S.011','Straight',[199,162,128]],
+    ['Khaki','Tay 04.004','Straight',[220,204,178]],
+    ['Khaki','Betulla 27.061','Rotary',[197,183,158]],
+    ['Rust','Radica di Madrona 46.031','Rotary',[200,161,124]],
+    ['Umber','Bolivar 52.080','Crown',[186,170,145]],
+    ['Umber','Rovere 13.032','Crown',[122,112,99]],
+    ['Brown','Zebrano 03.014','Straight',[129,98,78]],
+    ['Brown','Tanganika 01.061','Straight',[103,83,72]],
+    ['Brown','Rovere 13.028','Crown',[73,66,56]],
+    ['Charcoal','Sucupira F4.B03','Crown',[102,90,78]],
+    ['Charcoal','Eucalyptus Pomelé E5.P.B09','Rotary',[84,79,81]],
+    ['Greige','Rovere 13.033','Crown',[154,148,142]],
+    ['Silver','Taba Frisè L1.S.001','Straight',[204,205,203]],
+    ['Blue','Bolivar 52.001','Crown',[184,202,208]],
+    ['Green Yellow','Bolivar 52.082','Crown',[196,191,164]],
+    ['Red Pink','Pama T1.003','Straight',[226,175,162]],
+    ['Purple','Tay 04.007','Straight',[220,208,219]]
+  ];
+  function rnd(seed){ return function(){ seed = (seed*16807) % 2147483647; return (seed-1)/2147483646; }; }
+  function veneerCanvas(v, size){
+    var c = document.createElement('canvas'); c.width = c.height = size; var g = c.getContext('2d');
+    var r=v[3][0], gg=v[3][1], b=v[3][2], R = rnd(r*7+gg*13+b*17+1);
+    g.fillStyle = 'rgb('+r+','+gg+','+b+')'; g.fillRect(0,0,size,size);
+    var dark = 'rgba('+Math.max(0,r-40)+','+Math.max(0,gg-38)+','+Math.max(0,b-34)+',', light = 'rgba('+Math.min(255,r+22)+','+Math.min(255,gg+22)+','+Math.min(255,b+22)+',';
+    var k = size/512, i, x, y;
+    if(v[2]==='Straight'){
+      for(i=0;i<140;i++){ x = R()*size; g.strokeStyle = (R()<0.55?dark:light)+(0.08+R()*0.22)+')'; g.lineWidth = (0.6+R()*3.2)*k; g.beginPath(); g.moveTo(x,0); for(y=0;y<=size;y+=16*k) g.lineTo(x+Math.sin(y*0.004+i)*2.5*k, y); g.stroke(); }
+    } else if(v[2]==='Crown'){
+      for(i=0;i<70;i++){ var cx=size*0.5+(R()-0.5)*size*0.25, w=(20+i*7)*k, base=size*(0.15+R()*0.2);
+        g.strokeStyle=(i%3?dark:light)+(0.10+R()*0.18)+')'; g.lineWidth=(0.8+R()*2.4)*k; g.beginPath();
+        for(y=0;y<=size;y+=6*k){ var t=y/size, xo=w*(0.6+0.4*Math.sin(t*3+i))*(1+0.35*Math.sin(y*0.01*k+i)); g.lineTo(cx-xo,y); } g.stroke();
+        g.beginPath(); for(y=0;y<=size;y+=6*k){ var t2=y/size, xo2=w*(0.6+0.4*Math.sin(t2*3+i))*(1+0.35*Math.sin(y*0.01*k+i)); g.lineTo(cx+xo2,y); } g.stroke(); }
+    } else {
+      for(i=0;i<90;i++){ var x0=R()*size, y0=R()*size, rr=(10+R()*80)*k; g.strokeStyle=(R()<0.5?dark:light)+(0.06+R()*0.16)+')'; g.lineWidth=(0.6+R()*2)*k; g.beginPath(); g.ellipse(x0,y0,rr*2.4,rr,R()*0.4,0,Math.PI*2); g.stroke(); }
+    }
+    return c;
+  }
+  var texCache = {};
+  function veneerTex(idx){
+    if(texCache[idx]) return texCache[idx];
+    var t = new THREE.CanvasTexture(veneerCanvas(TABU[idx], 512)); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+    return (texCache[idx] = t);
+  }
+  // proiezione a scatola: coordinate di mappatura dalla normale, scala in mm (un riquadro ogni 600 mm)
+  function boxUV(geo){
+    if(geo.userData.boxUV) return; geo.userData.boxUV = true;
+    var p = geo.attributes.position, n = geo.attributes.normal; if(!n){ geo.computeVertexNormals(); n = geo.attributes.normal; }
+    var uv = new Float32Array(p.count*2), S = 1/0.6;
+    for(var i=0;i<p.count;i++){
+      var ax=Math.abs(n.getX(i)), ay=Math.abs(n.getY(i)), az=Math.abs(n.getZ(i)), u, v;
+      if(ax>=ay && ax>=az){ u=p.getZ(i); v=p.getY(i); } else if(ay>=ax && ay>=az){ u=p.getX(i); v=p.getZ(i); } else { u=p.getX(i); v=p.getY(i); }
+      uv[i*2]=u*S; uv[i*2+1]=v*S;
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uv,2));
+  }
+  var VEN = { fusto:{parts:['05','06'], orig:{}, cur:-1}, mensole:{parts:['10'], orig:{}, cur:-1} };
+  var swTarget = 'fusto';
+  function setVeneer(target, idx){
+    var T = VEN[target]; T.cur = idx;
+    PARTS.forEach(function(p){
+      if(T.parts.indexOf(p.n) < 0 || !p.mat3) return;
+      if(!(p.n in T.orig)) T.orig[p.n] = {color:p.mat3.color.clone(), rough:p.mat3.roughness};
+      if(idx < 0){ p.mat3.map = null; p.mat3.color.copy(T.orig[p.n].color); p.mat3.roughness = T.orig[p.n].rough; }
+      else {
+        p.nodes.forEach(function(nd){ nd.o.traverse(function(o){ if(o.isMesh) boxUV(o.geometry); }); });
+        p.mat3.map = veneerTex(idx); p.mat3.color.set(0xffffff); p.mat3.roughness = 0.5;
+      }
+      p.mat3.needsUpdate = true;
+    });
+    syncSw();
+  }
+  function syncSw(){
+    var cur = VEN[swTarget].cur;
+    Array.prototype.forEach.call(document.querySelectorAll('#sw button'), function(b){ b.setAttribute('aria-pressed', +b.dataset.i === cur ? 'true':'false'); });
+    document.getElementById('swName').textContent = cur < 0 ? 'Original, as in the Fusion file' : TABU[cur][1] + ' · ' + TABU[cur][0] + ' · ' + TABU[cur][2];
+  }
+  (function(){
+    var box = document.getElementById('sw');
+    var o = document.createElement('button'); o.type='button'; o.dataset.i = -1; o.title='Originale'; o.setAttribute('aria-label','Original, as in the Fusion file');
+    o.style.background = 'linear-gradient(135deg,#fff 46%,#111 47%,#111 53%,#fff 54%)'; o.style.boxShadow='inset 0 0 0 1px #d9d9d6';
+    o.addEventListener('click', function(){ setVeneer(swTarget, -1); }); box.appendChild(o);
+    TABU.forEach(function(v, i){
+      var b = document.createElement('button'); b.type='button'; b.dataset.i = i; b.title = v[1]+' · '+v[0]; b.setAttribute('aria-label', v[1]+', '+v[0]);
+      b.style.backgroundImage = 'url('+veneerCanvas(v, 64).toDataURL()+')';
+      b.addEventListener('click', function(){ setVeneer(swTarget, i); });
+      box.appendChild(b);
+    });
+    document.getElementById('swTarget').addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return; swTarget = b.dataset.t;
+      Array.prototype.forEach.call(this.children, function(x){ x.setAttribute('aria-pressed', x===b ? 'true':'false'); });
+      syncSw();
+    });
+    syncSw();
+  })();
+
+  function apply(k){ PARTS.forEach(function(p){ (p.nodes||[]).forEach(function(nd){ nd.o.position.copy(nd.base).addScaledVector(nd.d, k); }); }); }
+  function setTarget(v){ target = v; slider.value = Math.round(v*100); }
+  slider.addEventListener('input', function(){ target = slider.value/100; if(reduce){ t = target; apply(t); } });
+
+  function setActive(n){
+    active = n;
+    PARTS.forEach(function(p){
+      if(!p.mat3) return;
+      var dim = active && p.n !== active;
+      p.mat3.transparent = !!dim; p.mat3.opacity = dim ? 0.08 : 1; p.mat3.depthWrite = !dim; p.mat3.needsUpdate = true;
+      if(p.tag) p.tag.classList.toggle('on', p.n === active);
+      if(p.btn) p.btn.setAttribute('aria-pressed', p.n === active ? 'true' : 'false');
+    });
+  }
+  function buildLegend(){
+    var ol = document.getElementById('parts');
+    PARTS.forEach(function(p){
+      if(!p.nodes.length) return;
+      var li = document.createElement('li'), b = document.createElement('button'); b.type='button'; b.setAttribute('aria-pressed','false');
+      b.innerHTML = '<span>'+p.n+'</span><span class="nm">'+p.label+'</span><span class="q">'+(p.q||'')+'</span>';
+      b.addEventListener('mouseenter', function(){ if(!ol.dataset.pin) setActive(p.n); });
+      b.addEventListener('mouseleave', function(){ if(!ol.dataset.pin) setActive(null); });
+      b.addEventListener('focus', function(){ if(!ol.dataset.pin) setActive(p.n); });
+      b.addEventListener('blur', function(){ if(!ol.dataset.pin) setActive(null); });
+      b.addEventListener('click', function(){
+        if(ol.dataset.pin === p.n){ delete ol.dataset.pin; setActive(null); }
+        else { ol.dataset.pin = p.n; setActive(p.n); if(target < 0.5) setTarget(1); }
+      });
+      li.appendChild(b); ol.appendChild(li); p.btn = b;
+      var tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = p.n; tagsEl.appendChild(tg); p.tag = tg;
+    });
+  }
+  document.getElementById('reset').addEventListener('click', function(){ if(HOME){ camera.position.copy(HOME.p); controls.target.copy(HOME.t); controls.update(); } });
+
+  var W = 0, H = 0;
+  function resize(){
+    var r = stage.getBoundingClientRect(); W = Math.max(1, r.width); H = Math.max(1, r.height);
+    renderer.setSize(W, H, false); camera.aspect = W/H; camera.updateProjectionMatrix();
+  }
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+  window.addEventListener('resize', resize); resize();
+
+  var v = new THREE.Vector3();
+  function frame(){
+    requestAnimationFrame(frame);
+    if(Math.abs(target - t) > 0.0005){ t += (target - t) * 0.08; apply(t); }
+    controls.update();
+    renderer.render(scene, camera);
+    var show = Math.min(1, Math.max(0, (t - 0.25) / 0.4));
+    for(var i=0;i<PARTS.length;i++){
+      var p = PARTS[i]; if(!p.tag) continue;
+      v.copy(p.center).addScaledVector(p.dAvg, t).project(camera);
+      var x = (v.x*0.5+0.5)*W, y = (-v.y*0.5+0.5)*H;
+      p.tag.style.transform = 'translate('+(x-10).toFixed(1)+'px,'+(y-8).toFixed(1)+'px)';
+      p.tag.style.opacity = v.z > 1 ? 0 : ((active && p.n !== active) ? show*0.25 : show);
+    }
+  }
+  frame();
+})();
+</script>
+<script src="../site.js"></script>
+</body>
+</html>

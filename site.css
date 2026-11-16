@@ -94,3 +94,6 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 }
 @media (max-width:560px){ .cards,.gallery.g2,.gallery.g3,.gallery.g4{grid-template-columns:1fr} }
 .expo{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin:0;font-size:15px}
+.rule nav .lang{display:flex;gap:8px;padding-left:16px;border-left:1px solid var(--hair)}
+.rule nav .lang a[aria-current]{background:none;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.rule nav .lang a:not([aria-current]){color:var(--mute)}

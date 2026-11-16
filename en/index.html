@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bartolomeo Lodi-Fè, portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../site.css">
+
+<meta name="description" content="Bartolomeo Lodi-Fè, design student at ISIA Roma Design. Product and communication portfolio: Folia, Trabucco, Trattato del ribelle, Matrice, Exhibition route, Fritto Misto.">
+<link rel="canonical" href="https://bartolomeolodife.github.io/en/">
+<link rel="alternate" hreflang="it" href="https://bartolomeolodife.github.io/">
+<link rel="alternate" hreflang="en" href="https://bartolomeolodife.github.io/en/">
+<link rel="alternate" hreflang="fr" href="https://bartolomeolodife.github.io/fr/">
+<link rel="alternate" hreflang="x-default" href="https://bartolomeolodife.github.io/">
+<meta property="og:title" content="Bartolomeo Lodi-Fè, portfolio">
+<meta property="og:description" content="Bartolomeo Lodi-Fè, design student at ISIA Roma Design. Product and communication portfolio: Folia, Trabucco, Trattato del ribelle, Matrice, Exhibition route, Fritto Misto.">
+<meta property="og:url" content="https://bartolomeolodife.github.io/en/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bartolomeolodife.github.io/img/home/c-folia.jpg">
+<meta name="author" content="Bartolomeo Lodi-Fè">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Bartolomeo Lodi-Fè","url":"https://bartolomeolodife.github.io/","jobTitle":"Design student","affiliation":{"@type":"CollegeOrUniversity","name":"ISIA Roma Design"},"address":{"@type":"PostalAddress","addressLocality":"Roma"},"sameAs":["https://www.instagram.com/sbartoo/"]}</script> <!-- /seo -->
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png"> <!-- /icons -->
+</head>
+<body>
+<div class="site">
+<header class="rule top"><a href="index.html">Bartolomeo Lodi-Fè</a><span class="mid">Design student, ISIA Roma Design</span><nav><a href="index.html" aria-current="page">Projects</a><a href="percorso.html">Background</a><a href="percorso.html#contatti">Contact</a><span class="lang"><a href="../index.html" hreflang="it" lang="it">IT</a><a href="index.html" hreflang="en" lang="en" aria-current="true">EN</a><a href="../fr/index.html" hreflang="fr" lang="fr">FR</a></span></nav></header>
+<main class="home">
+<h1 class="bigname">Bartolomeo<br>Lodi-Fè</h1>
+<div class="strip prow" id="prow" aria-label="Projects, scrolling horizontally"><a class="pcard" href="folia.html" draggable="false"><div class="pic"><img src="../img/home/c-folia.jpg" alt="Folia" draggable="false"></div>
+<div class="cap"><span class="t">Folia</span></div><div class="cap sub"><span>Product</span><span class="note">2026</span></div></a><a class="pcard" href="trabucco.html" draggable="false"><div class="pic"><img src="../img/home/c-trabucco.jpg" alt="Trabucco" draggable="false"></div>
+<div class="cap"><span class="t">Trabucco</span></div><div class="cap sub"><span>Product</span><span class="note">2026</span></div></a><a class="pcard" href="trattato.html" draggable="false"><div class="pic"><img src="../img/home/c-trattato.jpg" alt="Trattato del ribelle/Guerrino" draggable="false"></div>
+<div class="cap"><span class="t">Trattato del ribelle/Guerrino</span></div><div class="cap sub"><span class="bar">Communication</span><span class="note">2026</span></div></a><a class="pcard" href="matrice.html" draggable="false"><div class="pic"><img src="../img/home/c-matrice-modulo.jpg" alt="Matrice" draggable="false"></div>
+<div class="cap"><span class="t">Matrice</span></div><div class="cap sub"><span>Basic Design</span><span class="note">2025</span></div></a><a class="pcard" href="percorso-espositivo.html" draggable="false"><div class="pic"><img src="../img/home/c-espositivo.jpg" alt="Exhibition route" draggable="false"></div>
+<div class="cap"><span class="t">Exhibition route</span></div><div class="cap sub"><span class="bar">Communication</span><span class="note">2026</span></div></a><a class="pcard" href="fritto-misto.html" draggable="false"><div class="pic"><img src="../img/home/c-fritto.jpg" alt="Fritto Misto" draggable="false"></div>
+<div class="cap"><span class="t">Fritto Misto</span></div><div class="cap sub"><span class="bar">Communication</span><span class="note">2025</span></div></a></div>
+<div class="strip-bar"><span>Six projects</span><span>Drag or scroll</span></div>
+</main>
+<style>
+.home{display:flex;flex-direction:column;gap:20px;padding:20px 0 24px;min-height:calc(100vh - 82px)}
+.home{--fs:clamp(56px,10.5vw,168px);--ph:max(280px,calc(100vh - 82px - 44px - var(--fs)*1.76 - 40px - 24px - 56px))}
+.bigname{font-size:var(--fs);line-height:.88;letter-spacing:-.035em;font-weight:400;margin:0}
+.prow{gap:24px;padding-bottom:12px;flex:1}
+.pcard{text-decoration:none;flex:none;display:flex;flex-direction:column;gap:6px;width:calc(var(--ph)*.8)}
+.pcard .pic{height:var(--ph);overflow:hidden;background:var(--tint)}
+.pcard .pic img{width:100%;height:100%;object-fit:cover;transition:transform .5s;user-select:none}
+.pcard:hover .pic img{transform:scale(1.03)}
+.pcard .cap{display:flex;gap:8px;align-items:baseline}
+.pcard .cap .n{width:28px}
+.pcard .cap .t{flex:1}
+.pcard *{text-decoration:none}.pcard:hover .cap .t{text-decoration:underline}
+.pcard .sub{font-size:12px;justify-content:space-between}
+@media (max-width:760px){.home{--ph:90vw}.pcard{width:72vw}}
+</style>
+<script>
+(function(){var r=document.getElementById('prow');r.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){var m=r.scrollWidth-r.clientWidth;if((e.deltaY>0&&r.scrollLeft<m)||(e.deltaY<0&&r.scrollLeft>0)){r.scrollLeft+=e.deltaY;e.preventDefault();}}},{passive:false});})();
+</script>
+<footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Rome</span><span>Bartolomeo Lodi-Fè</span></footer>
+</div>
+<script src="../site.js"></script>
+</body>
+</html>
