@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Matrice</title>
+<title>Matrice | Bartolomeo Lodi-Fè</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -99,6 +99,15 @@ html,body{height:auto}
 .page > main{min-height:calc(100vh - 41px)}
 .page > main .stage{min-height:max(520px, calc(100vh - 120px))}
 </style>
+
+<meta name="description" content="Matrice, di Bartolomeo Lodi-Fè: un modulo su griglia 9×9 ripetuto e combinato, da esplorare e comporre in 3D.">
+<link rel="canonical" href="https://bartolomeolodife.github.io/matrice.html">
+<meta property="og:title" content="Matrice | Bartolomeo Lodi-Fè">
+<meta property="og:description" content="Matrice, di Bartolomeo Lodi-Fè: un modulo su griglia 9×9 ripetuto e combinato, da esplorare e comporre in 3D.">
+<meta property="og:url" content="https://bartolomeolodife.github.io/matrice.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://bartolomeolodife.github.io/img/home/c-folia.jpg">
+<meta name="author" content="Bartolomeo Lodi-Fè"> <!-- /seo -->
 </head>
 <body>
 <div class="page">
@@ -584,7 +593,7 @@ html,body{height:auto}
   compDraw(); frameC(true);
 
   // ---------- Ciclo ----------
-  show(1, true);
+  show(0, true);
   function loop(now){
     requestAnimationFrame(loop);
     var dt = lastB ? Math.min(0.1,(now-lastB)/1000) : 0; lastB = now;
