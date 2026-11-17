@@ -25,3 +25,22 @@
     if(pos){ s.addEventListener('scroll', function(){ var p = s.scrollLeft / Math.max(1, s.scrollWidth - s.clientWidth); pos.textContent = Math.round(p*100) + '%'; }); }
   });
 })();
+
+/* Cursore: un punto tipografico che si ingrandisce al clic (solo con mouse) */
+(function(){
+  if(!window.matchMedia || !matchMedia('(pointer:fine)').matches) return;
+  var d = document.createElement('div'); d.className = 'dot'; d.setAttribute('aria-hidden','true');
+  document.body.appendChild(d); document.documentElement.classList.add('dotcursor');
+  var x = -100, y = -100, raf = 0;
+  function draw(){ raf = 0; d.style.transform = 'translate(' + x + 'px,' + y + 'px)'; }
+  document.addEventListener('mousemove', function(e){
+    x = e.clientX; y = e.clientY; d.classList.add('on');
+    var t = e.target.closest && e.target.closest('a,button,[role=button],label,select,.zoom,.gallery img,input[type=range]');
+    d.classList.toggle('link', !!t);
+    if(!raf) raf = requestAnimationFrame(draw);
+  }, {passive:true});
+  document.addEventListener('mousedown', function(){ d.classList.add('down'); });
+  document.addEventListener('mouseup', function(){ d.classList.remove('down'); });
+  document.addEventListener('mouseleave', function(){ d.classList.remove('on'); });
+  window.addEventListener('blur', function(){ d.classList.remove('on','down'); });
+})();
