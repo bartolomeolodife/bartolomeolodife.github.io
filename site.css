@@ -142,7 +142,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .specimen-text{margin:0;font-size:clamp(20px,1.9vw,32px);line-height:1.15;letter-spacing:-.015em}
 .specimen-text a{white-space:nowrap;color:var(--ink);text-decoration:none;padding:0 .08em;transition:background .15s,color .15s}
 .specimen-text a.sw{color:var(--mute)}
-.specimen-text a sup{font-size:.26em;letter-spacing:0;vertical-align:top;position:relative;top:.45em;margin-left:.15em;color:var(--mute)}
+.specimen-text a sup{font-size:.36em;letter-spacing:0;vertical-align:top;position:relative;top:.45em;margin-left:.15em;color:var(--mute)}
 .specimen-text a:hover{background:var(--ink);color:var(--paper)}
 .specimen-text a:hover sup{color:var(--paper)}
 @media (max-width:700px){.specimen-meta{grid-template-columns:1fr auto}.specimen-meta span:nth-child(2){display:none}.specimen-text{font-size:20px}}
