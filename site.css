@@ -242,3 +242,15 @@ main.grid:has(.cvsec){align-items:stretch}
 .bz3d.solo .bz-item.on{display:block;width:min(100%,calc((100vh - 230px) * .7048));justify-self:center}
 @media (max-width:560px){.bz-ctl .bz-hint{flex-basis:100%;margin:6px 0 0;order:9}.bz-ctl{flex-wrap:wrap}.bz-stage{gap:12px}}
 @media (min-width:701px){.bz3d:not(.solo) .bz-stage{max-width:calc((100vh - 230px) * .7048 * 2 + 24px)}}
+/* Come lavoro al computer: la sezione sotto il mouse si ingrandisce */
+@media (hover:hover) and (pointer:fine){
+.come > section.block{transition:opacity .4s,padding .45s cubic-bezier(.2,.8,.2,1)}
+.come > section.block h2{transition:font-size .45s cubic-bezier(.2,.8,.2,1)}
+.come > section.block .body p{transition:font-size .45s cubic-bezier(.2,.8,.2,1)}
+.come > section.block .body{transition:max-width .45s cubic-bezier(.2,.8,.2,1)}
+.come > section.block:hover{padding-top:44px;padding-bottom:44px}
+.come > section.block:hover h2{font-size:40px;line-height:1.05}
+.come > section.block:hover .body{max-width:70ch}
+.come > section.block:hover .body p{font-size:17px;line-height:1.45}
+.come:has(> section.block:hover) > section.block:not(:hover){opacity:.3}
+}
