@@ -179,7 +179,7 @@
       if(!s.drag){
         if(s.goal!=null){s.ry+=(s.goal-s.ry)*0.08;if(Math.abs(s.goal-s.ry)<0.3)s.goal=null}
         else{s.ry+=s.vy;s.vy*=0.94;}
-        if(s.goal==null&&Math.abs(s.vy)<0.4){var tgt=Math.round(s.ry/180)*180;s.ry+=(tgt-s.ry)*0.06;s.vy=0}
+        if(s.goal==null&&Math.abs(s.vy)<0.4){var tgt=Math.round(s.ry/360)*360;s.ry+=(tgt-s.ry)*0.05;s.vy=0}
         s.rx*=0.9;
       }
       var sway=(still||s.drag)?0:Math.sin(t*0.6+s.ph)*7, tilt=(still||s.drag)?0:Math.sin(t*0.45+s.ph)*2;
