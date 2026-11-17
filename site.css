@@ -241,3 +241,4 @@ main.grid:has(.cvsec){align-items:stretch}
 .bz3d.solo .bz-item{display:none}
 .bz3d.solo .bz-item.on{display:block;width:min(100%,calc((100vh - 230px) * .7048));justify-self:center}
 @media (max-width:560px){.bz-ctl .bz-hint{flex-basis:100%;margin:6px 0 0;order:9}.bz-ctl{flex-wrap:wrap}.bz-stage{gap:12px}}
+@media (min-width:701px){.bz3d:not(.solo) .bz-stage{max-width:calc((100vh - 230px) * .7048 * 2 + 24px)}}
