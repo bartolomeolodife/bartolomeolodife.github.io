@@ -44,3 +44,21 @@
   document.addEventListener('mouseleave', function(){ d.classList.remove('on'); });
   window.addEventListener('blur', function(){ d.classList.remove('on','down'); });
 })();
+
+/* Barra di scorrimento della pagina: una lineetta tipografica verticale */
+(function(){
+  var t = document.createElement('div'); t.className = 'vdash-track'; t.setAttribute('aria-hidden','true');
+  var d = document.createElement('span'); d.className = 'vdash'; t.appendChild(d); document.body.appendChild(t);
+  document.documentElement.classList.add('vdash-on');
+  var raf = 0;
+  function upd(){ raf = 0;
+    var se = document.scrollingElement || document.documentElement, max = se.scrollHeight - window.innerHeight;
+    t.style.display = max > 4 ? '' : 'none'; if(max <= 4) return;
+    var p = Math.min(1, Math.max(0, se.scrollTop / max));
+    d.style.transform = 'translateY(' + (p * (t.clientHeight - d.offsetHeight)).toFixed(1) + 'px)';
+  }
+  function q(){ if(!raf) raf = requestAnimationFrame(upd); }
+  window.addEventListener('scroll', q, {passive:true}); window.addEventListener('resize', q); window.addEventListener('load', q);
+  if(window.ResizeObserver) new ResizeObserver(q).observe(document.body);
+  upd();
+})();
