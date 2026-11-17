@@ -134,8 +134,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .bigname .namelink:hover{text-decoration:underline;text-decoration-thickness:.04em;text-underline-offset:.08em}
 .bar-line{border:1px solid var(--ink);color:var(--ink);padding:0 5px 1px;display:inline-block}
 .list a[target="_blank"],.credits a[target="_blank"]{text-decoration:none}.list a[target="_blank"]:hover,.credits a[target="_blank"]:hover{text-decoration:underline;text-underline-offset:3px}
-.come .specimen{margin:8px 0 28px;border-top:1px solid var(--hair);padding-top:10px}
-.come .specimen + section{margin-top:auto}
+.come .specimen{margin:auto 0 28px;border-top:1px solid var(--hair);padding-top:10px}
+.come .specimen + section{margin-top:0}
 .specimen-meta{display:grid;grid-template-columns:3fr 6fr 3fr;font-size:12px;color:var(--mute);margin-bottom:18px}
 .specimen-meta a{justify-self:end;color:var(--mute);text-decoration:none}
 .specimen-meta a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
