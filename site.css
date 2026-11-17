@@ -206,3 +206,8 @@ main.grid:has(.cvsec) > .span3.col > .col{order:2}
 .specimen-text.reveal a{opacity:.12;transition:opacity .5s}
 .specimen-text.reveal a.in{opacity:1}
 }
+/* Percorso al computer: competenze, software, lingue e contatti ancorati in basso */
+@media (min-width:701px){
+main.grid:has(.cvsec) > .span3.col > #competenze{margin-top:auto}
+main.grid:has(.cvsec){align-items:stretch}
+}
