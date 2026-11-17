@@ -83,7 +83,7 @@ function hold(){paused=true;k=0;clearTimeout(t);t=setTimeout(function(){paused=f
 ['pointerdown','wheel','touchstart','keydown'].forEach(function(e){r.addEventListener(e,hold,{passive:true});});
 r.addEventListener('mouseenter',function(){paused=true;k=0;clearTimeout(t);});
 r.addEventListener('mouseleave',function(){clearTimeout(t);t=setTimeout(function(){paused=false;pos=null;},800);});
-function step(now){if(!paused&&!document.hidden){if(pos===null||Math.abs(pos-r.scrollLeft)>2)pos=r.scrollLeft;k=Math.min(1,k+0.04);pos+=0.8*k;r.scrollLeft=pos;}requestAnimationFrame(step);}
+function step(now){if(!paused&&!document.hidden){if(pos===null||Math.abs(pos-r.scrollLeft)>2)pos=r.scrollLeft;k=Math.min(1,k+0.04);pos+=1.3*k;r.scrollLeft=pos;}requestAnimationFrame(step);}
 setTimeout(function(){requestAnimationFrame(step);},1200);
 })();
 </script>
