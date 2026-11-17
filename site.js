@@ -62,3 +62,21 @@
   if(window.ResizeObserver) new ResizeObserver(q).observe(document.body);
   upd();
 })();
+
+/* Percorso su telefono: apre la sezione che passa al centro dello schermo */
+(function(){
+  var secs=[].slice.call(document.querySelectorAll('.cvsec'));
+  if(!secs.length||!matchMedia('(hover:none),(pointer:coarse)').matches)return;
+  var cur=null,raf=0;
+  function pick(){
+    raf=0;var line=innerHeight*0.66,best=secs[0];
+    secs.forEach(function(s){if(s.getBoundingClientRect().top<line)best=s});
+    if(scrollY>40&&scrollY+innerHeight>=document.documentElement.scrollHeight-24)best=secs[secs.length-1];
+    if(best!==cur){if(cur)cur.classList.remove('on');if(best)best.classList.add('on');cur=best;lock=Date.now()+520;setTimeout(q,540)}
+  }
+  var lock=0;
+  function q(){if(Date.now()<lock)return;if(!raf)raf=requestAnimationFrame(pick)}
+  addEventListener('scroll',q,{passive:true});addEventListener('resize',q);
+  secs.forEach(function(s){s.addEventListener('click',function(){if(cur)cur.classList.remove('on');s.classList.add('on');cur=s})});
+  q();
+})();
