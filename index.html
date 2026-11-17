@@ -75,5 +75,17 @@ r.addEventListener('scroll',function(){var w=setW();if(r.scrollLeft<w*0.5)r.scro
 </div>
 <script src="site.js?v=18"></script>
 <script data-goatcounter="https://bartolomeolodife.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script id="autoscroll">
+(function(){var r=document.getElementById('prow');if(!r)return;
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var speed=0.35,pos=null,paused=false,t=null;
+function hold(){paused=true;clearTimeout(t);t=setTimeout(function(){paused=false;pos=null;},2500);}
+['pointerdown','wheel','touchstart','keydown'].forEach(function(e){r.addEventListener(e,hold,{passive:true});});
+r.addEventListener('mouseenter',function(){paused=true;clearTimeout(t);});
+r.addEventListener('mouseleave',function(){clearTimeout(t);t=setTimeout(function(){paused=false;pos=null;},800);});
+function step(){if(!paused&&!document.hidden){if(pos===null||Math.abs(pos-r.scrollLeft)>2)pos=r.scrollLeft;pos+=speed;r.scrollLeft=pos;}requestAnimationFrame(step);}
+setTimeout(function(){requestAnimationFrame(step);},1200);
+})();
+</script>
 </body>
 </html>
