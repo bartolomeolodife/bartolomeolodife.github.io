@@ -144,3 +144,47 @@
     t.addEventListener('pointerup',function(){on=false});t.addEventListener('pointercancel',function(){on=false});
   });
 })();
+
+/* Bazar del Cashmere: manifesti che ruotano in 3D, consultabili uno alla volta */
+(function(){
+  var root=document.querySelector('.bz3d');if(!root)return;
+  var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items=[].slice.call(root.querySelectorAll('.bz-item'));
+  var btns=[].slice.call(root.querySelectorAll('.bz-ctl button'));
+  function view(v){
+    btns.forEach(function(b){b.classList.toggle('on',b.dataset.v===String(v))});
+    root.classList.toggle('solo',v!=='all');
+    items.forEach(function(it){it.classList.toggle('on',it.dataset.i===String(v))});
+    if(v!=='all'&&cards[v]){var s=cards[v];s.vy=0;s.goal=Math.round(s.ry/360)*360}
+  }
+  var cards=[];
+  btns.forEach(function(b){b.addEventListener('click',function(){view(b.dataset.v)})});
+  cards=items.map(function(it,k){
+    var el=it.querySelector('.bz-card'),s={el:el,ry:0,rx:0,vy:0,drag:false,moved:0,ph:k*1.7};
+    var lx=0,ly=0,lt=0;
+    el.addEventListener('pointerdown',function(e){s.goal=null;s.drag=true;s.moved=0;lx=e.clientX;ly=e.clientY;lt=performance.now();s.vy=0;el.setPointerCapture(e.pointerId)});
+    el.addEventListener('pointermove',function(e){if(!s.drag)return;var dx=e.clientX-lx,dy=e.clientY-ly,now=performance.now();
+      s.moved+=Math.abs(dx)+Math.abs(dy);s.ry+=dx*0.45;s.rx=Math.max(-25,Math.min(25,s.rx-dy*0.25));
+      s.vy=dx*0.45/Math.max(8,now-lt)*16;lx=e.clientX;ly=e.clientY;lt=now});
+    function up(){if(!s.drag)return;s.drag=false;if(s.moved<6){view(root.classList.contains('solo')?'all':it.dataset.i)}}
+    el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+    el.addEventListener('keydown',function(e){if(e.key==='ArrowLeft'){s.vy=-9}else if(e.key==='ArrowRight'){s.vy=9}else if(e.key==='Enter'||e.key===' '){e.preventDefault();view(root.classList.contains('solo')?'all':it.dataset.i)}});
+    return s;
+  });
+  addEventListener('keydown',function(e){if(e.key==='Escape')view('all')});
+  var t0=performance.now();
+  (function loop(now){
+    var t=(now-t0)/1000;
+    cards.forEach(function(s){
+      if(!s.drag){
+        if(s.goal!=null){s.ry+=(s.goal-s.ry)*0.08;if(Math.abs(s.goal-s.ry)<0.3)s.goal=null}
+        else{s.ry+=s.vy;s.vy*=0.94;}
+        if(s.goal==null&&Math.abs(s.vy)<0.4){var tgt=Math.round(s.ry/180)*180;s.ry+=(tgt-s.ry)*0.06;s.vy=0}
+        s.rx*=0.9;
+      }
+      var sway=(still||s.drag)?0:Math.sin(t*0.6+s.ph)*7, tilt=(still||s.drag)?0:Math.sin(t*0.45+s.ph)*2;
+      s.el.style.transform='rotateX('+(s.rx+tilt).toFixed(2)+'deg) rotateY('+(s.ry+sway).toFixed(2)+'deg)';
+    });
+    requestAnimationFrame(loop);
+  })(t0);
+})();
