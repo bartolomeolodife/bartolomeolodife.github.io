@@ -113,8 +113,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .statua .yr{font-size:44px;line-height:1;letter-spacing:-.02em}
 .statua h3{font-size:22px;font-weight:400;margin:4px 0 0}
 .statua-img{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.statua-img figure{margin:0}
-.statua-img img{width:100%;aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in}
+.statua-img figure{margin:0;display:block}
+.statua-img img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in;background:var(--tint)}
 .statua-img figure.wide{grid-column:span 2}
 .statua-img figure.wide img{aspect-ratio:8/5}
 @media (max-width:760px){.statua-img{grid-template-columns:1fr 1fr}.statua-img figure.wide{grid-column:span 2}}
