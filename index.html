@@ -61,7 +61,15 @@
 @media (max-width:760px){.home{--ph:90vw}.pcard{width:72vw}}
 </style>
 <script>
-(function(){var r=document.getElementById('prow');r.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){var m=r.scrollWidth-r.clientWidth;if((e.deltaY>0&&r.scrollLeft<m)||(e.deltaY<0&&r.scrollLeft>0)){r.scrollLeft+=e.deltaY;e.preventDefault();}}},{passive:false});})();
+(function(){var r=document.getElementById('prow');
+var cards=[].slice.call(r.children);
+var before=document.createDocumentFragment(),after=document.createDocumentFragment();
+cards.forEach(function(c){var a=c.cloneNode(true),b=c.cloneNode(true);[a,b].forEach(function(k){k.setAttribute('aria-hidden','true');k.tabIndex=-1;});before.appendChild(a);after.appendChild(b);});
+r.insertBefore(before,r.firstChild);r.appendChild(after);
+function setW(){return cards[0].offsetLeft-r.children[0].offsetLeft;}
+function home(){r.scrollLeft=setW();}
+home();window.addEventListener('load',home);window.addEventListener('resize',home);
+r.addEventListener('scroll',function(){var w=setW();if(r.scrollLeft<w*0.5)r.scrollLeft+=w;else if(r.scrollLeft>w*1.5)r.scrollLeft-=w;},{passive:true});r.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){var m=r.scrollWidth-r.clientWidth;if((e.deltaY>0&&r.scrollLeft<m)||(e.deltaY<0&&r.scrollLeft>0)){r.scrollLeft+=e.deltaY;e.preventDefault();}}},{passive:false});})();
 </script>
 <footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Roma</span><span>Bartolomeo Lodi-Fè</span></footer>
 </div>
