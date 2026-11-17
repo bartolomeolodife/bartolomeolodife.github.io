@@ -178,16 +178,21 @@ main:has(.cvsec:hover) .cvsec:not(:hover){opacity:.35}
 .span9.col:has(> .cvsec){justify-content:flex-end}
 @media (min-width:701px){main.grid:has(.cvsec){min-height:calc(100vh - 140px)}}
 
-/* Percorso su telefono: la sezione al centro dello schermo si apre */
+/* Percorso su telefono: la sezione al centro dello schermo si accende e si ingrandisce */
 @media (hover:none),(pointer:coarse){
-.cvsec{transition:opacity .4s}
-.cvsec .list > div{grid-template-columns:64px minmax(0,1fr)!important;column-gap:12px;padding:9px 0;transition:padding .4s cubic-bezier(.2,.8,.2,1)}
+.cvsec{transition:opacity .45s;overflow-anchor:none}
+.cvsec .list > div{grid-template-columns:64px minmax(0,1fr)!important;column-gap:12px;padding:12px 0}
 .cvsec .list > div > span{grid-column:auto!important}
-.cvsec .list > div > span:nth-child(3),.cvsec .list > div > span:nth-child(4){display:block!important;grid-column:2!important;max-height:0;opacity:0;overflow:hidden;transition:max-height .5s cubic-bezier(.2,.8,.2,1),opacity .35s,margin .4s}
-.cvsec .list > div > span:nth-child(2){transition:font-size .4s cubic-bezier(.2,.8,.2,1)}
-.cvsec.on .list > div{padding:14px 0}
+.cvsec .list > div > span:nth-child(3),.cvsec .list > div > span:nth-child(4){display:block!important;grid-column:2!important;margin-top:4px}
+.cvsec .list > div > span:nth-child(2){font-size:16px;line-height:1.25;transition:font-size .45s cubic-bezier(.2,.8,.2,1)}
 .cvsec.on .list > div > span:nth-child(2){font-size:19px;line-height:1.2}
-.cvsec.on .list > div > span:nth-child(3){max-height:3em;opacity:1;margin-top:6px}
-.cvsec.on .list > div > span:nth-child(4){max-height:12em;opacity:1;margin-top:4px}
-main:has(.cvsec.on) .cvsec:not(.on){opacity:.35}
+main:has(.cvsec.on) .cvsec:not(.on){opacity:.3}
+}
+/* Percorso su telefono: competenze, software, lingue e contatti dopo il percorso */
+@media (max-width:700px){
+main.grid:has(.cvsec){row-gap:28px}
+main.grid:has(.cvsec) > .span3.col{display:contents}
+main.grid:has(.cvsec) > .span3.col > h1,main.grid:has(.cvsec) > .span3.col > .lead{order:0}
+main.grid:has(.cvsec) > .span9{order:1;margin-bottom:12px}
+main.grid:has(.cvsec) > .span3.col > .col{order:2}
 }

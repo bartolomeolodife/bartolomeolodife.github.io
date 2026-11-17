@@ -69,9 +69,12 @@
   if(!secs.length||!matchMedia('(hover:none),(pointer:coarse)').matches)return;
   var cur=null,raf=0;
   function pick(){
-    raf=0;var line=innerHeight*0.66,best=secs[0];
-    secs.forEach(function(s){if(s.getBoundingClientRect().top<line)best=s});
-    if(scrollY>40&&scrollY+innerHeight>=document.documentElement.scrollHeight-24)best=secs[secs.length-1];
+    raf=0;var mid=innerHeight*0.5,best=null,bd=1e9;
+    secs.forEach(function(s){var r=s.getBoundingClientRect();
+      var d=(r.top<=mid&&r.bottom>=mid)?0:Math.min(Math.abs(r.top-mid),Math.abs(r.bottom-mid));
+      if(d<bd){bd=d;best=s}});
+    if(scrollY<60)best=secs[0];
+    if(scrollY+innerHeight>=document.documentElement.scrollHeight-24&&secs[secs.length-1].getBoundingClientRect().bottom>0&&best===secs[secs.length-2])best=secs[secs.length-1];
     if(best!==cur){if(cur)cur.classList.remove('on');if(best)best.classList.add('on');cur=best;lock=Date.now()+520;setTimeout(q,540)}
   }
   var lock=0;
