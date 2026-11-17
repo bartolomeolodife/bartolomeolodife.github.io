@@ -127,3 +127,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 }
 .come{display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
 .come > section:nth-of-type(2){margin-top:auto}
+.come .skills-field{position:relative;flex:1;min-height:130px;margin:0 0 24px;overflow:hidden}
+.come .skills-field a{position:absolute;left:0;top:0;font-size:13px;line-height:1.2;color:var(--mute);white-space:nowrap;text-decoration:none;opacity:0;transition:opacity .6s,color .2s;will-change:transform}
+.come .skills-field.on a{opacity:1}
+.come .skills-field a:hover,.come .skills-field a:focus{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.come > section:nth-of-type(2){margin-top:0}
+@media (max-width:700px){.come .skills-field{min-height:340px}}
