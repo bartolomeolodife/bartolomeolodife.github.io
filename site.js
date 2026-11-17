@@ -122,3 +122,25 @@
   picked.forEach(function(el){el.classList.add('rv');io.observe(el)});
   setTimeout(function(){picked.forEach(function(el){if(el.classList.contains('rv')&&!el.classList.contains('in')){var r=el.getBoundingClientRect();if(r.bottom<0)done(el)}})},2500);
 })();
+
+/* Strisce orizzontali (es. timeline del Trattato): lineetta tipografica al posto della barra */
+(function(){
+  [].forEach.call(document.querySelectorAll('.strip'),function(s){
+    if(s.id==='prow')return;
+    s.classList.add('strip-dash');s.style.paddingBottom='0';
+    var t=document.createElement('div');t.className='dash-track';t.setAttribute('aria-hidden','true');
+    var d=document.createElement('span');d.className='dash';t.appendChild(d);
+    s.parentNode.insertBefore(t,s.nextSibling);
+    function upd(){var m=s.scrollWidth-s.clientWidth;var p=m>0?s.scrollLeft/m:0;
+      t.style.visibility=m>2?'visible':'hidden';
+      d.style.transform='translateX('+(p*(t.clientWidth-d.offsetWidth)).toFixed(1)+'px)'}
+    s.addEventListener('scroll',function(){requestAnimationFrame(upd)},{passive:true});
+    addEventListener('resize',upd);addEventListener('load',upd);upd();
+    function seek(e){var r=t.getBoundingClientRect(),x=(e.clientX-r.left-d.offsetWidth/2)/(r.width-d.offsetWidth);
+      s.scrollLeft=Math.max(0,Math.min(1,x))*(s.scrollWidth-s.clientWidth)}
+    var on=false;
+    t.addEventListener('pointerdown',function(e){on=true;t.setPointerCapture(e.pointerId);seek(e)});
+    t.addEventListener('pointermove',function(e){if(on)seek(e)});
+    t.addEventListener('pointerup',function(){on=false});t.addEventListener('pointercancel',function(){on=false});
+  });
+})();

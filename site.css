@@ -217,3 +217,7 @@ main.grid:has(.cvsec){align-items:stretch}
 .rule:not(.bottom){animation:rv-top .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes rv-top{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion: reduce){.rv{opacity:1;transform:none}.rule:not(.bottom){animation:none}}
+.strip-dash{scrollbar-width:none}
+.strip-dash::-webkit-scrollbar{display:none}
+.strip-dash + .dash-track{margin-top:12px;height:14px;background-size:100% 1px;cursor:pointer;touch-action:none}
+.strip-dash + .dash-track .dash{top:6px}
