@@ -599,8 +599,7 @@ html,body{height:auto}
     compDraw(); frameC(true);
     secC.scrollIntoView({behavior: reduce ? 'auto' : 'smooth'});
   });
-  // partenza: una figura di quattro moduli
-  for(var q=0;q<4;q++){ var Rq = new THREE.Matrix4().makeRotationZ(q*Math.PI/2); comp.push({s:moduleMatrix(-4.5,-4.5,0,0,false).premultiply(Rq), c:[moduleMatrix(-4.5,-4.5,0,0,false).premultiply(Rq)]}); }
+  // partenza: piano vuoto, zero moduli
   compDraw(); frameC(true);
 
   // ---------- Ciclo ----------
