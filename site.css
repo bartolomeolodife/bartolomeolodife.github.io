@@ -222,3 +222,4 @@ main.grid:has(.cvsec){align-items:stretch}
 .strip-dash + .dash-track{margin-top:12px;height:14px;background-size:100% 1px;cursor:pointer;touch-action:none}
 .strip-dash + .dash-track .dash{top:6px}
 .body.wide{max-width:104ch}
+.bz-posters img{width:100%;height:auto;cursor:zoom-in;box-shadow:0 0 0 1px var(--hair)}
