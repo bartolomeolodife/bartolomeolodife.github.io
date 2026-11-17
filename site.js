@@ -63,9 +63,9 @@
   upd();
 })();
 
-/* Percorso su telefono: apre la sezione che passa al centro dello schermo */
+/* Telefono: la sezione al centro dello schermo si accende (Percorso, Come lavoro) */
 (function(){
-  var secs=[].slice.call(document.querySelectorAll('.cvsec'));
+  var secs=[].slice.call(document.querySelectorAll('.cvsec, .come > section.block'));
   if(!secs.length||!matchMedia('(hover:none),(pointer:coarse)').matches)return;
   var cur=null,raf=0;
   function pick(){
@@ -82,4 +82,15 @@
   addEventListener('scroll',q,{passive:true});addEventListener('resize',q);
   secs.forEach(function(s){s.addEventListener('click',function(){if(cur)cur.classList.remove('on');s.classList.add('on');cur=s})});
   q();
+})();
+
+/* Come lavoro su telefono: le competenze si accendono una dopo l'altra */
+(function(){
+  var sp=document.querySelector('.come .specimen-text');
+  if(!sp||!matchMedia('(hover:none),(pointer:coarse)').matches)return;
+  var w=[].slice.call(sp.querySelectorAll('a')),done=false;
+  sp.classList.add('reveal');
+  function go(){if(done)return;var r=sp.getBoundingClientRect();if(r.top>innerHeight*0.9||r.bottom<0)return;done=true;
+    w.forEach(function(a,i){setTimeout(function(){a.classList.add('in')},250+i*90)})}
+  addEventListener('scroll',go,{passive:true});go();
 })();

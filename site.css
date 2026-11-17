@@ -196,3 +196,13 @@ main.grid:has(.cvsec) > .span3.col > h1,main.grid:has(.cvsec) > .span3.col > .le
 main.grid:has(.cvsec) > .span9{order:1;margin-bottom:12px}
 main.grid:has(.cvsec) > .span3.col > .col{order:2}
 }
+/* Come lavoro su telefono */
+@media (hover:none),(pointer:coarse){
+.come > section.block{transition:opacity .45s;overflow-anchor:none}
+.come{padding-bottom:28vh}
+.come > section.block h2{transition:font-size .45s cubic-bezier(.2,.8,.2,1)}
+.come > section.block.on h2{font-size:30px;line-height:1.08}
+.come:has(> section.block.on) > section.block:not(.on){opacity:.3}
+.specimen-text.reveal a{opacity:.12;transition:opacity .5s}
+.specimen-text.reveal a.in{opacity:1}
+}
