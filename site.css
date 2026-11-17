@@ -175,3 +175,5 @@ html.vdash-on::-webkit-scrollbar,html.vdash-on body::-webkit-scrollbar{display:n
 .cvsec:hover .list > div > span:nth-child(3),.cvsec:hover .list > div > span:nth-child(4){max-height:6em;opacity:1}
 main:has(.cvsec:hover) .cvsec:not(:hover){opacity:.35}
 }
+.span9.col:has(> .cvsec){justify-content:flex-end}
+main.grid:has(.cvsec){min-height:calc(100vh - 140px)}
