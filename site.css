@@ -133,3 +133,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .come .skills-field a:hover,.come .skills-field a:focus{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .come > section:nth-of-type(2){margin-top:0}
 @media (max-width:700px){.come .skills-field{min-height:340px}}
+.skills-field a{position:absolute;left:0;top:0;font-size:13px;line-height:1.2;color:var(--mute);white-space:nowrap;text-decoration:none;opacity:0;transition:opacity .6s,color .2s;will-change:transform}
+.skills-field.on a{opacity:1}
+.skills-field a:hover,.skills-field a:focus{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.home-top{display:flex;align-items:stretch;gap:32px}
+.home-top .bigname{flex:none}
+.home-top .skills-field{position:relative;flex:1;min-width:0;overflow:hidden;margin:8px 0}
+@media (max-width:700px){.home-top .skills-field{display:none}}
