@@ -155,3 +155,8 @@ html.dotcursor, html.dotcursor *{cursor:none !important}
 .dot.link::before{transform:scale(1.6)}
 .dot.down::before{transform:scale(3.2)}
 .dot.link.down::before{transform:scale(3.6)}
+#prow{scrollbar-width:none}
+#prow::-webkit-scrollbar{display:none}
+.dash-track{position:relative;height:2px;margin:6px 0 10px;background:linear-gradient(var(--hair),var(--hair)) center/100% 1px no-repeat}
+.dash-track .dash{position:absolute;left:0;top:0;width:120px;height:2px;background:var(--ink);will-change:transform}
+@media (max-width:700px){.dash-track .dash{width:64px}}

@@ -6,7 +6,7 @@
 <title>Bartolomeo Lodi-Fè, design portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../site.css?v=19">
+<link rel="stylesheet" href="../site.css?v=20">
 
 <meta name="description" content="Bartolomeo Lodi-Fè, design student at ISIA Roma Design. Product and communication portfolio: Folia, Trabucco, Trattato del ribelle, Matrice, Exhibition route, Fritto Misto.">
 <link rel="canonical" href="https://bartolomeolodife.github.io/en/">
@@ -40,7 +40,7 @@
 <div class="cap"><span class="t">Matrice</span></div><div class="cap sub"><span class="bar-line">Basic Design</span><span class="note">2025</span></div></a><a class="pcard" href="percorso-espositivo.html" draggable="false"><div class="pic"><img src="../img/home/c-espositivo.jpg" alt="Exhibition route" draggable="false"></div>
 <div class="cap"><span class="t">Exhibition route</span></div><div class="cap sub"><span class="bar">Communication</span><span class="note">2026</span></div></a><a class="pcard" href="fritto-misto.html" draggable="false"><div class="pic"><img src="../img/home/c-fritto.jpg" alt="Fritto Misto" draggable="false"></div>
 <div class="cap"><span class="t">Fritto Misto</span></div><div class="cap sub"><span class="bar">Communication</span><span class="note">2025</span></div></a></div>
-<div class="strip-bar"><span>Six projects</span><span>Drag or scroll</span></div>
+<div class="dash-track" aria-hidden="true"><span class="dash"></span></div><div class="strip-bar"><span>Six projects</span><span>Drag or scroll</span></div>
 </main>
 <style>
 .home{display:flex;flex-direction:column;gap:20px;padding:20px 0 24px;min-height:calc(100vh - 82px)}
@@ -72,7 +72,7 @@ r.addEventListener('scroll',function(){var w=setW();if(r.scrollLeft<w*0.5)r.scro
 </script>
 <footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Rome</span><span>Bartolomeo Lodi-Fè</span></footer>
 </div>
-<script src="../site.js?v=19"></script>
+<script src="../site.js?v=20"></script>
 <script data-goatcounter="https://bartolomeolodife.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script id="autoscroll">
 (function(){var r=document.getElementById('prow');if(!r)return;
@@ -84,6 +84,14 @@ r.addEventListener('mouseenter',function(){paused=true;k=0;clearTimeout(t);});
 r.addEventListener('mouseleave',function(){clearTimeout(t);t=setTimeout(function(){paused=false;pos=null;},800);});
 function step(now){if(!paused&&!document.hidden){if(pos===null||Math.abs(pos-r.scrollLeft)>2)pos=r.scrollLeft;k=Math.min(1,k+0.04);pos+=1.3*k;r.scrollLeft=pos;}requestAnimationFrame(step);}
 setTimeout(function(){requestAnimationFrame(step);},1200);
+})();
+</script>
+<script id="dashbar">
+(function(){var r=document.getElementById('prow'),t=document.querySelector('.dash-track'),d=t&&t.querySelector('.dash');if(!r||!d)return;
+var n=r.children.length/3;
+function upd(){var w=r.children[n].offsetLeft-r.children[0].offsetLeft;if(w<=0)return;var p=((r.scrollLeft-w)%w+w)%w/w;
+d.style.transform='translateX('+(p*(t.clientWidth-d.offsetWidth)).toFixed(1)+'px)';}
+r.addEventListener('scroll',function(){requestAnimationFrame(upd);},{passive:true});window.addEventListener('resize',upd);window.addEventListener('load',upd);upd();
 })();
 </script>
 </body>
