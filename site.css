@@ -165,3 +165,13 @@ html.vdash-on::-webkit-scrollbar,html.vdash-on body::-webkit-scrollbar{display:n
 .vdash-track{position:fixed;top:12px;bottom:12px;right:6px;width:2px;z-index:30;pointer-events:none;background:linear-gradient(var(--hair),var(--hair)) center/1px 100% no-repeat}
 .vdash{position:absolute;left:0;top:0;width:2px;height:120px;background:var(--ink);will-change:transform}
 @media (max-width:700px){.vdash{height:64px}.vdash-track{right:3px}}
+@media (hover:hover) and (pointer:fine){
+.cvsec{transition:opacity .35s}
+.cvsec .list > div{transition:padding .35s cubic-bezier(.2,.8,.2,1)}
+.cvsec .list > div > span:nth-child(2){transition:font-size .35s cubic-bezier(.2,.8,.2,1)}
+.cvsec .list > div > span:nth-child(3),.cvsec .list > div > span:nth-child(4){max-height:0;opacity:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.8,.2,1),opacity .3s}
+.cvsec:hover .list > div{padding:14px 0}
+.cvsec:hover .list > div > span:nth-child(2){font-size:20px}
+.cvsec:hover .list > div > span:nth-child(3),.cvsec:hover .list > div > span:nth-child(4){max-height:6em;opacity:1}
+main:has(.cvsec:hover) .cvsec:not(:hover){opacity:.35}
+}
