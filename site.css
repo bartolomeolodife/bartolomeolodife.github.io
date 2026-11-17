@@ -139,11 +139,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .specimen-meta{display:grid;grid-template-columns:3fr 6fr 3fr;font-size:12px;color:var(--mute);margin-bottom:18px}
 .specimen-meta a{justify-self:end;color:var(--mute);text-decoration:none}
 .specimen-meta a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
-.specimen-text{margin:0;font-size:clamp(24px,2.75vw,46px);line-height:1.1;letter-spacing:-.02em}
+.specimen-text{margin:0;font-size:clamp(20px,1.9vw,32px);line-height:1.15;letter-spacing:-.015em}
 .specimen-text a{white-space:nowrap;color:var(--ink);text-decoration:none;padding:0 .08em;transition:background .15s,color .15s}
 .specimen-text a.sw{color:var(--mute)}
 .specimen-text a sup{font-size:.26em;letter-spacing:0;vertical-align:top;position:relative;top:.45em;margin-left:.15em;color:var(--mute)}
 .specimen-text a:hover{background:var(--ink);color:var(--paper)}
 .specimen-text a:hover sup{color:var(--paper)}
-@media (max-width:700px){.specimen-meta{grid-template-columns:1fr auto}.specimen-meta span:nth-child(2){display:none}.specimen-text{font-size:26px}}
+@media (max-width:700px){.specimen-meta{grid-template-columns:1fr auto}.specimen-meta span:nth-child(2){display:none}.specimen-text{font-size:20px}}
 @media (max-width:700px){.specimen-text a{white-space:normal}}
