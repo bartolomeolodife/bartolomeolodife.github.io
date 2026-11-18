@@ -188,5 +188,3 @@
     requestAnimationFrame(loop);
   })(t0);
 })();
-
-
