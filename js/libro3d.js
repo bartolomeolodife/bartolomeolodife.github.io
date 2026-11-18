@@ -24,7 +24,7 @@
   sun.position.set(-2.2, 6, 3.2); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   var sc = sun.shadow.camera; sc.left = -6; sc.right = 6; sc.top = 6; sc.bottom = -6; sc.near = 1; sc.far = 16;
-  sun.shadow.bias = -0.0004; sun.shadow.radius = 6;
+  sun.shadow.bias = -0.0003; sun.shadow.normalBias = 0.004; sun.shadow.radius = 6;
   scene.add(sun);
   var fill = new T3.DirectionalLight(0xffffff, 0.12); fill.position.set(3, 2, -2); scene.add(fill);
   var ground = new T3.Mesh(new T3.PlaneGeometry(40, 40), new T3.ShadowMaterial({ opacity: 0.1, depthWrite: false }));
@@ -49,10 +49,10 @@
 
   /* ---------- un volume ---------- */
   function Book(cfg) {
-    var me = this;
+    var me = this, W = cfg.w || 2.30, H = cfg.h || 3.10;
     var NP = cfg.pages, NL = NP / 2 + 1, LEAF = cfg.leaf, COV = cfg.cov, BLOCK = (NL - 1) * LEAF, SIGS = cfg.sigs;
     var PAPER = lin(cfg.paper), EDGE = lin(cfg.edge), THREAD = lin(cfg.thread);
-    this.cfg = cfg; this.T = BLOCK + 2 * COV; this.NL = NL;
+    this.cfg = cfg; this.T = BLOCK + 2 * COV; this.NL = NL; this.W = W; this.H = H;
     this.root = new T3.Group(); this.pivot = new T3.Group(); this.geo = new T3.Group();
     this.root.add(this.pivot); this.pivot.add(this.geo);
     var book = this.geo;
@@ -136,6 +136,11 @@
     }
     (function () {
       var m = new T3.MeshLambertMaterial({ color: EDGE }), bands = [{ y: COV / 2 + 0.0004, r: COV / 2 + 0.0006 }], sh = BLOCK / SIGS;
+      if (cfg.wrap) {                                  // copertina avvolgente: da chiuso il dorso è la piega liscia della copertina
+        var cm = new T3.MeshLambertMaterial({ color: PAPER });
+        var tube = new T3.Mesh(halfTube((BLOCK + 2 * COV) / 2 + 0.0008, (BLOCK + 2 * COV) / 2), cm); tube.castShadow = true; spine.add(tube);
+        return;
+      }
       for (var s = 0; s < SIGS; s++) bands.push({ y: COV + sh * (s + 0.5), r: sh / 2 });
       bands.push({ y: COV + BLOCK + COV / 2 - 0.0004, r: COV / 2 + 0.0006 });
       bands.forEach(function (b) { var mm = new T3.Mesh(halfTube(b.r, b.y), m); mm.castShadow = true; spine.add(mm); });
@@ -146,6 +151,28 @@
         spine.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), bands.length * 6, 0.0024, 6, false), tm));
       }
     })();
+    /* catalogo: con la copertina aperta, nella piega si vede il dorso cucito del blocco */
+    var sew = null;
+    if (cfg.wrap) {
+      var c = document.createElement('canvas'); c.width = 128; c.height = 1024;
+      var g2 = c.getContext('2d'), cw = 128 / SIGS;
+      for (var i = 0; i < SIGS; i++) {
+        var gr = g2.createLinearGradient(i * cw, 0, (i + 1) * cw, 0);
+        gr.addColorStop(0, '#d9d7d1'); gr.addColorStop(0.5, '#f7f6f2'); gr.addColorStop(1, '#cfccc5');
+        g2.fillStyle = gr; g2.fillRect(i * cw, 0, cw, 1024);
+      }
+      g2.strokeStyle = '#8f8b83'; g2.lineWidth = 2.2;
+      for (var k = 0; k < cfg.stations; k++) {
+        var y = 1024 * (0.06 + 0.88 * k / (cfg.stations - 1));
+        g2.beginPath();
+        for (var i2 = 0; i2 <= SIGS; i2++) { var x2 = i2 * cw, yy = y + (i2 % 2 ? 7 : -7); if (i2) g2.lineTo(x2, yy); else g2.moveTo(x2, yy); }
+        g2.stroke();
+        g2.fillStyle = '#a9a59d'; g2.fillRect(cw * 0.5 - 3, y - 9, 6, 18); g2.fillRect(128 - cw * 0.5 - 3, y - 9, 6, 18);
+      }
+      var st = new T3.CanvasTexture(c); st.encoding = T3.sRGBEncoding; st.anisotropy = maxAniso;
+      sew = new T3.Mesh(new T3.PlaneGeometry(0.075, H * 0.985), new T3.MeshLambertMaterial({ map: st }));
+      sew.rotation.x = -Math.PI / 2; sew.receiveShadow = true; sew.visible = false; book.add(sew);
+    }
 
     /* il foglio che gira */
     var SX = 46, SZ = 6, leafGeo = new T3.BufferGeometry();
@@ -160,7 +187,7 @@
     var lf = new T3.MeshLambertMaterial({ color: PAPER, vertexColors: true }), lb = new T3.MeshLambertMaterial({ color: PAPER, vertexColors: true, side: T3.BackSide });
     lf.shadowSide = lb.shadowSide = T3.DoubleSide;
     var leafFront = new T3.Mesh(leafGeo, lf), leafBack = new T3.Mesh(leafGeo, lb);
-    leafFront.receiveShadow = leafBack.receiveShadow = true;
+    leafFront.receiveShadow = leafBack.receiveShadow = true; leafFront.castShadow = leafBack.castShadow = true;
     var leafGroup = new T3.Group(); leafGroup.add(leafFront, leafBack); leafGroup.visible = false; book.add(leafGroup);
     function bendLeaf(theta, grabZ, stiff, hy) {
       var p = leafGeo.attributes.position.array, c = leafGeo.attributes.color.array;
@@ -185,7 +212,6 @@
       }
       leafGeo.attributes.position.needsUpdate = true; leafGeo.attributes.color.needsUpdate = true;
       leafGeo.computeVertexNormals(); leafGeo.computeBoundingSphere();
-      var cast = theta > 0.14 && theta < Math.PI - 0.14; leafFront.castShadow = leafBack.castShadow = cast;
     }
 
     /* stato */
@@ -200,6 +226,7 @@
       R.set(hr, rTop ? tex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? tex(lTop) : null, null);
       spine.visible = !me.opened && L === 0 && !f;
+      if (sew) { var sl = f ? Math.min(L, f.leaf) : L; sew.visible = me.opened && sl === 1; sew.position.set(-0.0375 - 0.004, hl + 0.0011, 0); }
       if (f) {
         leafGroup.visible = true;
         var rt = rectoOf(f.leaf), vt = versoOf(f.leaf);
@@ -246,8 +273,8 @@
   }
 
   /* ---------- i due volumi ---------- */
-  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp', back: 'cover-back.webp' });
-  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, paper: '#f6f5f1', edge: '#f1f0ec', thread: '#bdb9b1', sigs: 5, stations: 9, leaf: 0.0013, cov: 0.004, cover: 'cover.webp', back: null });
+  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, wrap: true, paper: '#f6f5f1', edge: '#f1f0ec', thread: '#bdb9b1', sigs: 5, stations: 7, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = [libro, catalogo];
   stackGroup.add(libro.root, catalogo.root);
 
@@ -261,13 +288,13 @@
   }
   function distFor(m) {
     if (m === 'stack') return camera.aspect < 1 ? fitDist(W * 2.1, H * 1.25) : fitDist(W * 1.5, H * 1.2);
-    if (m === 'apart') return camera.aspect < 1 ? fitDist(W * 1.9, H * 2.6) : fitDist(W * 3.3, H * 1.25);
+    if (m === 'apart') return camera.aspect < 1 ? fitDist(W * 2.0, H * 3.0) : fitDist(W * 4.1, H * 1.3);
     return fitDist(2 * W * 1.06, H * 1.3);
   }
   function elFor(m) { return m === 'read' ? 1.22 : (m === 'apart' ? 0.5 : 0.38); }
   function place() {
     var tb = libro.T, k = S.sep, r = S.read, side = camera.aspect < 1 ? 0 : 1;
-    var dx = W * 0.62 * side, dz = H * 0.62 * (1 - side);
+    var dx = W * 0.85 * side, dz = H * 0.78 * (1 - side);
     libro.root.position.set(-dx * k, 0, -dz * k);
     catalogo.root.position.set(0.12 * (1 - k) + dx * k, (tb + 0.0006) * (1 - k), -0.08 * (1 - k) + dz * k);
     catalogo.root.rotation.y = -0.07 * (1 - k);
@@ -346,9 +373,10 @@
     if (mode === 'apart' && !busy) drag.book = pickBook(e);
     if (mode === 'read' && !busy && active && !active.flip) {
       var p = planeHit(e), L = active.L();
-      if (p && Math.abs(p.z) < H / 2) {
-        if (p.x > W * 0.08 && L < active.NL) drag.leaf = { leaf: L, dir: 1, gz: p.z / (H / 2) };
-        else if (p.x < -W * 0.08 && L > 1) drag.leaf = { leaf: L - 1, dir: -1, gz: p.z / (H / 2) };
+      var aW = active.W, aH = active.H;
+      if (p && Math.abs(p.z) < aH / 2) {
+        if (p.x > aW * 0.08 && L < active.NL) drag.leaf = { leaf: L, dir: 1, gz: p.z / (aH / 2) };
+        else if (p.x < -aW * 0.08 && L > 1) drag.leaf = { leaf: L - 1, dir: -1, gz: p.z / (aH / 2) };
       }
     }
     cv.setPointerCapture(e.pointerId);
@@ -363,7 +391,7 @@
     } else if (mode === 'read' && drag.leaf && drag.moved > 6 && active) {
       if (!active.flip) active.flip = { leaf: drag.leaf.leaf, theta: drag.leaf.dir > 0 ? 0 : Math.PI, grabZ: drag.leaf.gz };
       var p = planeHit(e);
-      if (p && active.flip && !active.flip.anim) { active.flip.theta = Math.acos(Math.max(-1, Math.min(1, p.x / W))); active.flip.grabZ = drag.leaf.gz; active.layout(); }
+      if (p && active.flip && !active.flip.anim) { active.flip.theta = Math.acos(Math.max(-1, Math.min(1, p.x / active.W))); active.flip.grabZ = drag.leaf.gz; active.layout(); }
     }
     idle = performance.now(); dirty = true; drag.x = e.clientX; drag.y = e.clientY;
   });
