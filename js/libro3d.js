@@ -63,39 +63,66 @@
   function matPaper(map, side) { return new T3.MeshLambertMaterial({ color: map ? 0xffffff : PAPER, map: map || null, side: side || T3.FrontSide }); }
   function setMap(m, t) { m.map = t || null; m.color.copy(t ? new T3.Color(0xffffff) : PAPER); m.needsUpdate = true; }
 
-  /* ---------- pile di fogli (sinistra e destra) ---------- */
+  /* ---------- pile di fogli (sinistra e destra): da aperte scendono curve nella piega ---------- */
+  var Y0 = 0.0035, CURL = 0.2, CURVE = 0;        // altezza al dorso, ampiezza della curva, 0 chiuso → 1 aperto
+  function g(s) { return s >= CURL ? 1 : 1 - Math.pow(1 - s / CURL, 2.2); }
+  function gp(s) { return s >= CURL ? 0 : 2.2 * Math.pow(1 - s / CURL, 1.2) / CURL; }
+  function topY(s, h) { var lo = Math.min(Y0, h); return h - CURVE * (h - lo) * (1 - g(s)); }
+  function slope(s, h) { var lo = Math.min(Y0, h); return Math.atan(CURVE * (h - lo) * gp(s) / W); }
+  var NXS = 40;
+  function sAt(i) { return Math.pow(i / NXS, 1.7); }
   function Stack(side) {
-    this.side = side;                                   // +1 destra, -1 sinistra
+    this.side = side;
     var et = edgeTexture(); this.edgeTex = et;
-    var em = new T3.MeshLambertMaterial({ color: 0xffffff, map: et });
-    this.body = new T3.Mesh(new T3.BoxGeometry(W, 1, H), [em, em, em, em, em, em]);
-    this.body.castShadow = true; this.body.receiveShadow = true;
-    this.top = new T3.Mesh(new T3.PlaneGeometry(W, H), matPaper(null));
-    this.top.rotation.x = -Math.PI / 2; this.top.receiveShadow = true;
+    this.mTop = new T3.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+    this.mEdge = new T3.MeshLambertMaterial({ color: 0xffffff, map: et });
+    this.mesh = new T3.Mesh(new T3.BufferGeometry(), [this.mTop, this.mEdge]);
+    this.mesh.castShadow = true; this.mesh.receiveShadow = true;
+    this.mTop.shadowSide = this.mEdge.shadowSide = T3.DoubleSide;
     this.bottom = new T3.Mesh(new T3.PlaneGeometry(W, H), matPaper(null, T3.BackSide));
     this.bottom.rotation.x = -Math.PI / 2; this.bottom.receiveShadow = true;
-    this.gutter = new T3.Mesh(new T3.PlaneGeometry(W, H), new T3.MeshBasicMaterial({ map: gutterTex(side), transparent: true, depthWrite: false }));
-    this.gutter.rotation.x = -Math.PI / 2;
-    book.add(this.body, this.top, this.bottom, this.gutter);
+    this.h = -1; this.c = -1;
+    book.add(this.mesh, this.bottom);
   }
-  Stack.prototype.set = function (h, topTex, botTex) {
-    var x = this.side * W / 2, s = Math.max(h, 0.0001);
-    this.body.scale.y = s; this.body.position.set(x, s / 2, 0);
-    this.edgeTex.repeat.set(1, Math.max(1, h / 0.02));
-    this.top.position.set(x, s + 0.0004, 0); this.gutter.position.set(x, s + 0.0008, 0);
-    this.bottom.position.set(x, -0.0004, 0);
-    setMap(this.top.material, topTex); setMap(this.bottom.material, botTex);
-    var vis = h > 0.00005; this.body.visible = this.top.visible = this.bottom.visible = vis;
-    this.gutter.visible = vis && opened;
+  Stack.prototype.build = function (h) {
+    var sd = this.side, pos = [], uv = [], col = [], idx = [], n = 0, top = 0;
+    function v(x, y, z, a, b, c) { pos.push(x, y, z); uv.push(a, b); col.push(c, c, c); return n++; }
+    // superficie superiore (curva vicino al dorso)
+    var rows = [];
+    for (var i = 0; i <= NXS; i++) {
+      var s = sAt(i), x = sd * s * W, y = topY(s, h), shade = 1 - CURVE * 0.22 * Math.pow(Math.max(0, 1 - s / 0.14), 2);
+      var u = sd > 0 ? s : 1 - s;
+      rows.push([v(x, y, -H / 2, u, 1, shade), v(x, y, H / 2, u, 0, shade)]);
+    }
+    for (i = 0; i < NXS; i++) { var a = rows[i], b = rows[i + 1]; if (sd > 0) idx.push(a[0], a[1], b[0], b[0], a[1], b[1]); else idx.push(a[0], b[0], a[1], b[0], b[1], a[1]); }
+    top = idx.length;
+    // testa e piede: strisce tra la base e la curva
+    [-1, 1].forEach(function (zs) {
+      var z = zs * H / 2, prev = null;
+      for (var i = 0; i <= NXS; i++) {
+        var s = sAt(i), x = sd * s * W, y = topY(s, h);
+        var p = [v(x, 0, z, s * 2, 0, 1), v(x, y, z, s * 2, y * 50, 1)];
+        if (prev) { var flip = (zs > 0) === (sd > 0); if (flip) idx.push(prev[0], p[0], prev[1], p[0], p[1], prev[1]); else idx.push(prev[0], prev[1], p[0], p[0], prev[1], p[1]); }
+        prev = p;
+      }
+    });
+    // taglio davanti
+    var xe = sd * W, ye = topY(1, h), q = [v(xe, 0, -H / 2, 0, 0, 1), v(xe, ye, -H / 2, 0, ye * 50, 1), v(xe, 0, H / 2, 6, 0, 1), v(xe, ye, H / 2, 6, ye * 50, 1)];
+    if (sd > 0) idx.push(q[0], q[1], q[2], q[2], q[1], q[3]); else idx.push(q[0], q[2], q[1], q[2], q[3], q[1]);
+    var geo = new T3.BufferGeometry();
+    geo.setAttribute('position', new T3.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T3.Float32BufferAttribute(uv, 2));
+    geo.setAttribute('color', new T3.Float32BufferAttribute(col, 3)); geo.setIndex(idx);
+    geo.addGroup(0, top, 0); geo.addGroup(top, idx.length - top, 1);
+    geo.computeVertexNormals();
+    this.mesh.geometry.dispose(); this.mesh.geometry = geo;
   };
-  function gutterTex(side) {
-    var c = document.createElement('canvas'); c.width = 256; c.height = 2;
-    var g = c.getContext('2d'), gr = g.createLinearGradient(side > 0 ? 0 : 256, 0, side > 0 ? 256 : 0, 0);
-    gr.addColorStop(0, 'rgba(60,50,40,.30)'); gr.addColorStop(0.03, 'rgba(60,50,40,.13)'); gr.addColorStop(0.09, 'rgba(60,50,40,.04)');
-    gr.addColorStop(0.2, 'rgba(60,50,40,0)'); gr.addColorStop(1, 'rgba(60,50,40,0)');
-    g.fillStyle = gr; g.fillRect(0, 0, 256, 2);
-    var t = new T3.CanvasTexture(c); t.encoding = T3.sRGBEncoding; return t;
-  }
+  Stack.prototype.set = function (h, topTex, botTex) {
+    if (Math.abs(h - this.h) > 1e-7 || this.c !== CURVE) { this.build(Math.max(h, 0.0001)); this.h = h; this.c = CURVE; }
+    this.bottom.position.set(this.side * W / 2, -0.0004, 0);
+    this.mTop.map = topTex || null; this.mTop.color.copy(topTex ? new T3.Color(0xffffff) : PAPER); this.mTop.needsUpdate = true;
+    setMap(this.bottom.material, botTex);
+    var vis = h > 0.00005; this.mesh.visible = this.bottom.visible = vis;
+  };
   var R = new Stack(1), Lft = new Stack(-1);
 
   /* ---------- dorso a vista: segnature e filo ---------- */
@@ -139,17 +166,22 @@
   })();
   var leafFront = new T3.Mesh(leafGeo, matPaper(null, T3.FrontSide));
   var leafBack = new T3.Mesh(leafGeo, matPaper(null, T3.BackSide));
+  leafFront.material.shadowSide = leafBack.material.shadowSide = T3.DoubleSide;
   leafFront.castShadow = leafBack.castShadow = true; leafFront.receiveShadow = leafBack.receiveShadow = true;
   var leafGroup = new T3.Group(); leafGroup.add(leafFront, leafBack); leafGroup.visible = false; book.add(leafGroup);
 
-  function bendLeaf(theta, grabZ, stiff) {
-    var p = leafGeo.attributes.position.array, b = Math.sin(theta) * (stiff ? 0.35 : 0.95), du = W / SX;
+  var curH = { l: 0, r: 0 };
+  function bendLeaf(theta, grabZ, stiff, hy) {
+    var p = leafGeo.attributes.position.array, b = Math.sin(theta) * (stiff ? 0.35 : 0.95), du = W / SX, t = theta / Math.PI;
     for (var j = 0; j <= SZ; j++) {
       var v = j / SZ * 2 - 1, corner = grabZ * v * 0.45, x = 0, y = 0;
       for (var i = 0; i <= SX; i++) {
         var u = i / SX, k = (j * (SX + 1) + i) * 3;
+        var floor = (x >= 0 ? topY(Math.min(1, x / W), curH.r) : topY(Math.min(1, -x / W), curH.l)) - hy + 0.0009;
+        if (y < floor) y = floor;
         p[k] = x; p[k + 1] = y; p[k + 2] = -H / 2 + H * j / SZ;
-        var phi = Math.min(Math.PI, Math.max(0, theta + b * (u * u) * (1 + corner)));
+        var base = theta + (1 - t) * slope(u, curH.r) - t * slope(u, curH.l);
+        var phi = Math.min(Math.PI, Math.max(0, base + b * (u * u) * (1 + corner)));
         x += Math.cos(phi) * du; y += Math.sin(phi) * du;
       }
     }
@@ -164,6 +196,7 @@
   function layout() {
     var showL = flip ? Math.min(L, flip.leaf) : L, showR = flip ? Math.max(L, flip.leaf + 1) : L;
     var hl = heights(showL).left, hr = heights(showR).right;
+    CURVE = opened ? 1 : 0; curH.l = hl; curH.r = hr;
     var rTop = showR < NL ? rectoOf(showR) : null, lTop = showL > 0 ? versoOf(showL - 1) : null;
     R.set(hr, rTop ? tex(rTop) : null, tex('cover-back.webp', true));
     Lft.set(hl, lTop ? tex(lTop) : null, null);
@@ -172,8 +205,9 @@
       leafGroup.visible = true;
       var rt = rectoOf(flip.leaf), vt = versoOf(flip.leaf);
       setMap(leafFront.material, rt ? tex(rt) : null); setMap(leafBack.material, vt ? tex(vt, true) : null);
-      var hy = (hr + hl) / 2 + 0.0006; leafGroup.position.set(0, hy + Math.sin(flip.theta) * 0.004, 0);
-      bendLeaf(flip.theta, flip.grabZ, flip.leaf === 0);
+      var hy = (CURVE ? Math.min(Y0, hr) * (1 - flip.theta / Math.PI) + Math.min(Y0, Math.max(hl, 0.0001)) * (flip.theta / Math.PI) : (hr + hl) / 2) + 0.0012;
+      leafGroup.position.set(0, hy, 0);
+      bendLeaf(flip.theta, flip.grabZ, flip.leaf === 0, hy);
     } else leafGroup.visible = false;
     for (var l = L - 2; l <= L + 3; l++) { if (l < 0 || l >= NL) continue; var a = rectoOf(l), b = versoOf(l); if (a) tex(a); if (b) tex(b, l !== 0); }
     dirty = true;
@@ -258,7 +292,7 @@
     var r = renderer.domElement.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    plane.constant = -(heights(L).right * 0.5 + heights(L).left * 0.5);
+    plane.constant = -(heights(L).right * 0.6);
     if (!ray.ray.intersectPlane(plane, hit)) return null;
     return { x: hit.x, z: hit.z };
   }
@@ -313,6 +347,7 @@
   var ctl = host.parentNode.querySelector('.libro-ctl');
   var bp = ctl.querySelector('.libro-prev'), bn = ctl.querySelector('.libro-next'), lab = ctl.querySelector('.libro-n'), bo = ctl.querySelector('.libro-open');
   var hint = host.querySelector('.libro-hint');
+  if (matchMedia('(pointer: coarse)').matches) { var hp = host.dataset.hintClosed.split(' · '); if (hp.length === 3) host.dataset.hintClosed = hp[0] + ' · ' + hp[2]; }
   function label() {
     if (!opened) return host.dataset.cover;
     var lp = L >= 2 ? 2 * (L - 1) : null, rp = L <= NP / 2 ? 2 * L - 1 : null;
@@ -356,5 +391,5 @@
     });
   }
   resize(); layout(); applyView(); ui();
-  window.__libro = { view: view, setDirty: function(){dirty=true;}, open: open, close: close, turn: turn, state: function () { return { L: L, opened: opened, flip: !!flip }; } };
+  window.__libro = { flipAt: function (th) { if (!flip) { flip = { leaf: L, theta: th, grabZ: 0.3 }; } flip.theta = th; layout(); }, view: view, setDirty: function(){dirty=true;}, open: open, close: close, turn: turn, state: function () { return { L: L, opened: opened, flip: !!flip }; } };
 })();
