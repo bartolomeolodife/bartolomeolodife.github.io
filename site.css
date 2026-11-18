@@ -117,6 +117,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 .statua-img img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;display:block;cursor:zoom-in;background:var(--tint)}
 .statua-img figure.wide{grid-column:span 2}
 .statua-img figure.wide img{aspect-ratio:8/5}
+.statua-img figure.cut img{object-fit:contain;object-position:50% 100%;background:none}
 @media (max-width:760px){.statua-img{grid-template-columns:1fr 1fr}.statua-img figure.wide{grid-column:span 2}}
 .come .display{font-size:clamp(28px,3.4vw,52px);line-height:1.06;letter-spacing:-.015em;margin:0;max-width:20em}
 .come h2{font-size:24px;line-height:1.15}
