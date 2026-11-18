@@ -189,34 +189,4 @@
   })(t0);
 })();
 
-/* Trattato: libro sfogliabile pagina per pagina */
-(function(){
-  var el=document.getElementById('libro');if(!el||!window.St||!St.PageFlip)return;
-  var base=el.dataset.base,N=+el.dataset.pages,pages=[];
-  function mk(src,cls){var d=document.createElement('div');d.className='lp'+(cls?' '+cls:'');d.setAttribute('data-density','soft');
-    if(src){var i=document.createElement('img');i.alt='';i.decoding='async';i.draggable=false;i.dataset.src=base+src;d.appendChild(i)}
-    el.appendChild(d);pages.push(d)}
-  mk('cover.webp','--cover');mk('','');
-  for(var k=1;k<=N;k++)mk(('00'+k).slice(-3)+'.webp','');
-  mk('','');mk('cover-back.webp','--cover');
-  var T=pages.length;
-  function load(c){for(var j=c-4;j<=c+7;j++){var p=pages[j];if(!p)continue;var im=p.querySelector('img');if(im&&im.dataset.src){im.src=im.dataset.src;delete im.dataset.src}}}
-  load(0);
-  var pf=new St.PageFlip(el,{width:1039,height:1401,size:'stretch',minWidth:240,maxWidth:1039,minHeight:323,maxHeight:1401,
-    showCover:true,usePortrait:true,mobileScrollSupport:true,maxShadowOpacity:.32,flippingTime:850,drawShadow:true,autoSize:true,startZIndex:2});
-  pf.loadFromHTML(pages);
-  var lab=document.querySelector('.libro-n'),bp=document.querySelector('.libro-prev'),bn=document.querySelector('.libro-next');
-  function pn(i){return i>=2&&i<=N+1?i-1:null}
-  function upd(){var i=pf.getCurrentPageIndex(),port=pf.getOrientation()==='portrait',t;
-    load(i);
-    if(i===0)t=el.dataset.cover;else if(i>=T-1)t=el.dataset.back;
-    else{var a=pn(i),b=port?null:pn(i+1);
-      if(a&&b)t=el.dataset.pn+' '+a+'–'+b;else if(a||b)t=el.dataset.p1+' '+(a||b);else t='';}
-    lab.textContent=t;bp.disabled=i===0;bn.disabled=i>=T-1;}
-  pf.on('flip',upd);pf.on('changeOrientation',upd);pf.on('changeState',function(e){if(e.data==='flipping'||e.data==='user_fold'){load(pf.getCurrentPageIndex())}});
-  bp.addEventListener('click',function(){pf.flipPrev()});bn.addEventListener('click',function(){pf.flipNext()});
-  var sec=document.getElementById('sfoglia'),vis=false;
-  if('IntersectionObserver' in window)new IntersectionObserver(function(e){vis=e[0].isIntersecting},{threshold:.4}).observe(sec);
-  addEventListener('keydown',function(e){if(!vis)return;if(e.key==='ArrowRight'){pf.flipNext()}else if(e.key==='ArrowLeft'){pf.flipPrev()}});
-  upd();
-})();
+

@@ -6,7 +6,7 @@
 <title>Trattato del ribelle/Guerrino | Bartolomeo Lodi-Fè</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../site.css?v=47">
+<link rel="stylesheet" href="../site.css?v=48">
 
 <meta name="description" content="Trattato del ribelle/Guerrino, de Bartolomeo Lodi-Fè : un projet éditorial sur Jünger et la communauté de Bagnaia, exposé à la Biennale internationale de graphisme de Milan.">
 <link rel="canonical" href="https://bartolomeolodife.github.io/fr/trattato.html">
@@ -57,9 +57,9 @@
 </div></div>
 </section>
 <section class="block" id="sfoglia">
-<div class="grid"><div class="span3 col"><h2>Feuilleter le livre</h2></div><div class="span6"><p class="note">Le livre entier, 208 pages, sur son papier. Faites glisser le coin d’une page ou utilisez les flèches.</p></div></div>
-<div class="libro-wrap"><div class="libro" id="libro" data-base="../img/libro/" data-pages="208" data-cover="Couverture" data-back="Quatrième de couverture" data-p1="page" data-pn="pages" style="--grana:url(../img/libro/grana.png)"></div></div>
-<div class="libro-ctl"><button type="button" class="libro-prev" aria-label="Page précédente">←</button><span class="libro-n" aria-live="polite">Couverture</span><button type="button" class="libro-next" aria-label="Page suivante">→</button></div>
+<div class="grid"><div class="span3 col"><h2>Feuilleter le livre</h2></div><div class="span6"><p class="note">Le livre entier, 208 pages, sur son papier. Fermé, il tourne dans tous les sens pour montrer la couture apparente ; ouvert, on le feuillette en faisant glisser les pages.</p></div></div>
+<div class="libro3d" id="libro3d" data-base="../img/libro/" data-pages="208" data-cover="Couverture" data-p1="page" data-pn="pages" data-open="Ouvrir le livre" data-close="Fermer" data-hint-closed="Glisser pour le tourner · cliquer pour l’ouvrir" data-hint-open="Glisser ou cliquer une page pour la tourner"><p class="libro-hint">Glisser pour le tourner · cliquer pour l’ouvrir</p></div>
+<div class="libro-ctl"><button type="button" class="libro-prev" aria-label="Page précédente">←</button><span class="libro-n" aria-live="polite">Couverture</span><button type="button" class="libro-next" aria-label="Page suivante">→</button><button type="button" class="libro-open">Ouvrir le livre</button></div>
 </section>
 <section class="block" id="timeline">
 <div class="grid" style="margin-bottom:16px">
@@ -87,7 +87,7 @@
 </main>
 <footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Trattato del ribelle/Guerrino</span><span>Bartolomeo Lodi-Fè</span></footer>
 </div>
-<script src="../js/page-flip.browser.js"></script><script src="../site.js?v=47"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="../js/libro3d.js?v=5" defer></script><script src="../site.js?v=48"></script>
 <script data-goatcounter="https://bartolomeolodife.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
