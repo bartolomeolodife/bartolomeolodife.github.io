@@ -315,7 +315,7 @@
 
   /* ---------- i due volumi ---------- */
   var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', rodColor: '#d9d2c3', threadR: 0.0032, knot: 0.0058, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', rodColor: '#d9d2c3', threadR: 0.0032, knot: 0.0074, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = [libro, catalogo];
   stackGroup.add(libro.root, catalogo.root);
 
