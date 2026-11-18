@@ -68,6 +68,7 @@
 .pcard .bk-go{color:var(--ink);margin-top:clamp(2px,1.5cqh,6px);text-decoration:underline;text-underline-offset:3px}
 @media (hover:hover) and (pointer:fine){.pcard:hover .flip{transform:rotateY(180deg)}.pcard:hover .pic img{transform:none}}
 .pcard.is-flipped .flip{transform:rotateY(180deg)}
+@media (hover:none){.pcard .bk-go{align-self:flex-start;padding:8px 0;margin:-8px 0}}
 @media (prefers-reduced-motion:reduce){.pcard .flip{transition:none}}
 .pcard .cap{display:flex;gap:8px;align-items:baseline}
 .pcard .cap .n{width:28px}
@@ -90,7 +91,7 @@ r.addEventListener('scroll',function(){var w=setW();if(r.scrollLeft<w*0.5)r.scro
 <script id="flip-touch">
 (function(){var r=document.getElementById('prow');if(!r||!matchMedia('(hover: none)').matches)return;
 var on=null;function off(){if(on){on.classList.remove('is-flipped');on=null;}}
-r.addEventListener('click',function(e){var c=e.target.closest('.pcard');if(!c)return;if(c!==on){e.preventDefault();off();c.classList.add('is-flipped');on=c;}});
+r.addEventListener('click',function(e){var c=e.target.closest('.pcard');if(!c)return;if(c===on&&e.target.closest('.bk-go'))return;e.preventDefault();if(c===on){off();return;}off();c.classList.add('is-flipped');on=c;});
 r.addEventListener('scroll',function(){if(!on)return;var b=on.getBoundingClientRect();if(b.right<0||b.left>innerWidth)off();},{passive:true});
 document.addEventListener('click',function(e){if(on&&!e.target.closest('#prow'))off();});})();
 </script>
