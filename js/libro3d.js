@@ -31,15 +31,25 @@
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
   var stackGroup = new T3.Group(); scene.add(stackGroup);
 
-  var loader = new T3.TextureLoader(), cache = {}, maxAniso = renderer.capabilities.getMaxAnisotropy(), dirty = true;
-  function tex(url, mirror) {
-    var key = url + (mirror ? '|m' : '');
-    if (cache[key]) return cache[key];
-    var t = loader.load(url, function () { dirty = true; });
-    t.encoding = T3.sRGBEncoding; t.anisotropy = maxAniso;
+  var imgLoader = new T3.ImageLoader(), cache = {}, maxAniso = renderer.capabilities.getMaxAnisotropy(), dirty = true, onTexReady = [];
+  function mkTex(mirror) {
+    var t = new T3.Texture(); t.encoding = T3.sRGBEncoding; t.anisotropy = maxAniso; t._ready = false;
+    t.generateMipmaps = true; t.minFilter = T3.LinearMipmapLinearFilter;
     if (mirror) { t.wrapS = T3.RepeatWrapping; t.repeat.x = -1; t.offset.x = 1; }
-    cache[key] = t; return t;
+    return t;
   }
+  function tex(url, mirror) {                       // una sola immagine per la versione normale e quella specchiata
+    var e = cache[url];
+    if (!e) {
+      e = cache[url] = { a: mkTex(false), m: mkTex(true) };
+      imgLoader.load(url, function (img) {
+        [e.a, e.m].forEach(function (t) { t.image = img; t.needsUpdate = true; t._ready = true; });
+        dirty = true; onTexReady.forEach(function (f) { f(); });
+      });
+    }
+    return mirror ? e.m : e.a;
+  }
+  function ready(t) { return !t || t._ready; }
   function edgeTexture(r, g0, b) {
     var c = document.createElement('canvas'); c.width = 4; c.height = 512;
     var g = c.getContext('2d');
@@ -59,8 +69,10 @@
     function pageName(p) { return cfg.base + ('00' + p).slice(-3) + '.webp'; }
     function rectoOf(l) { return l === 0 ? cfg.base + cfg.cover : (l <= NP / 2 ? pageName(2 * l - 1) : null); }
     function versoOf(l) { return l === 0 ? null : (l <= NP / 2 ? pageName(2 * l) : null); }
+    function matte(o) { o.specular = 0x000000; o.shininess = 0; return new T3.MeshPhongMaterial(o); }   // carta opaca, luce calcolata per pixel: niente bande sul foglio curvo
     function matPaper(side) { return new T3.MeshLambertMaterial({ color: PAPER, side: side || T3.FrontSide }); }
-    function setMap(m, t) { m.map = t || null; m.color.copy(t ? new T3.Color(0xffffff) : PAPER); m.needsUpdate = true; }
+    var WHITE = new T3.Color(0xffffff);
+    function setMap(m, t) { if (t && !ready(t)) return; var w = t || null; if (m.map !== w) { m.map = w; m.needsUpdate = true; } m.color.copy(w ? WHITE : PAPER); }
 
     /* pile curve vicino al dorso */
     var Y0 = 0.0035, CURL = 0.2, CURVE = 0, NXS = 40, curH = { l: 0, r: 0 };
@@ -70,11 +82,12 @@
     function slope(s, h) { var lo = Math.min(Y0, h); return Math.atan(CURVE * (h - lo) * gp(s) / W); }
     function ao(s) { return 1 - CURVE * 0.22 * Math.pow(Math.max(0, 1 - s / 0.14), 2); }
     function sAt(i) { return Math.pow(i / NXS, 1.7); }
+    var WR = 0.74, WG = 0.9, WB = 1.24;                 // l'ombra nella piega è calda, come nelle foto
     var ec = new T3.Color(cfg.edge); var er = Math.round(ec.r * 255), eg = Math.round(ec.g * 255), eb = Math.round(ec.b * 255);
     function Stack(side) {
       this.side = side;
       this.edgeTex = edgeTexture(er, eg, eb);
-      this.mTop = new T3.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+      this.mTop = matte({ color: PAPER, vertexColors: true });
       this.mEdge = new T3.MeshLambertMaterial({ color: 0xffffff, map: this.edgeTex });
       this.mTop.shadowSide = this.mEdge.shadowSide = T3.DoubleSide;
       this.mesh = new T3.Mesh(new T3.BufferGeometry(), [this.mTop, this.mEdge]);
@@ -87,7 +100,7 @@
     }
     Stack.prototype.build = function (h) {
       var sd = this.side, pos = [], uv = [], col = [], idx = [], n = 0, top;
-      function v(x, y, z, a, b, c) { pos.push(x, y, z); uv.push(a, b); col.push(c, c, c); return n++; }
+      function v(x, y, z, a, b, c) { pos.push(x, y, z); uv.push(a, b); var d = 1 - c; col.push(1 - d * WR, 1 - d * WG, 1 - d * WB); return n++; }
       var rows = [];
       for (var i = 0; i <= NXS; i++) {
         var s = sAt(i), x = sd * s * W, y = topY(s, h), u = sd > 0 ? s : 1 - s;
@@ -115,7 +128,7 @@
     Stack.prototype.set = function (h, topTex, botTex) {
       if (Math.abs(h - this.h) > 1e-7 || this.c !== CURVE) { this.build(Math.max(h, 0.0001)); this.h = h; this.c = CURVE; }
       this.bottom.position.set(this.side * W / 2, -0.0004, 0);
-      this.mTop.map = topTex || null; this.mTop.color.copy(topTex ? new T3.Color(0xffffff) : PAPER); this.mTop.needsUpdate = true;
+      setMap(this.mTop, topTex);
       setMap(this.bottom.material, botTex);
       var vis = h > 0.00005; this.mesh.visible = this.bottom.visible = vis;
     };
@@ -134,45 +147,62 @@
       gg.setAttribute('position', new T3.Float32BufferAttribute(pos, 3)); gg.setAttribute('normal', new T3.Float32BufferAttribute(nor, 3));
       gg.setAttribute('uv', new T3.Float32BufferAttribute(uv, 2)); gg.setIndex(idx); return gg;
     }
+    var knotGeo = new T3.SphereGeometry(1, 8, 6);
     (function () {
       var m = new T3.MeshLambertMaterial({ color: EDGE }), bands = [{ y: COV / 2 + 0.0004, r: COV / 2 + 0.0006 }], sh = BLOCK / SIGS;
-      if (cfg.wrap) {                                  // copertina avvolgente: da chiuso il dorso è la piega liscia della copertina
-        var cm = new T3.MeshLambertMaterial({ color: PAPER });
-        var tube = new T3.Mesh(halfTube((BLOCK + 2 * COV) / 2 + 0.0008, (BLOCK + 2 * COV) / 2), cm); tube.castShadow = true; spine.add(tube);
-        return;
-      }
       for (var s = 0; s < SIGS; s++) bands.push({ y: COV + sh * (s + 0.5), r: sh / 2 });
       bands.push({ y: COV + BLOCK + COV / 2 - 0.0004, r: COV / 2 + 0.0006 });
       bands.forEach(function (b) { var mm = new T3.Mesh(halfTube(b.r, b.y), m); mm.castShadow = true; spine.add(mm); });
-      var tm = new T3.MeshLambertMaterial({ color: THREAD }), K = cfg.stations;
+      var tm = new T3.MeshLambertMaterial({ color: THREAD }), K = cfg.stations, tr = cfg.threadR || 0.0024;
       for (var k = 0; k < K; k++) {
         var z = -H / 2 + 0.16 + (H - 0.32) * k / (K - 1), pts = [];
-        bands.forEach(function (b, i) { pts.push(new T3.Vector3(-b.r * 1.15 - 0.0012, b.y, z + (i % 2 ? 0.013 : -0.013))); });
-        spine.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), bands.length * 6, 0.0024, 6, false), tm));
+        bands.forEach(function (b, i) { pts.push(new T3.Vector3(-b.r * 1.15 - tr * 0.5, b.y, z + (i % 2 ? 0.013 : -0.013))); });
+        spine.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), bands.length * 6, tr, 6, false), tm));
+        if (cfg.knot) pts.forEach(function (p, i) { if (i % 2) return; var kn = new T3.Mesh(knotGeo, tm); kn.scale.set(cfg.knot * 0.8, cfg.knot, cfg.knot * 1.3); kn.position.copy(p); kn.position.x -= cfg.knot * 0.4; spine.add(kn); });
       }
     })();
-    /* catalogo: con la copertina aperta, nella piega si vede il dorso cucito del blocco */
-    var sew = null;
-    if (cfg.wrap) {
-      var c = document.createElement('canvas'); c.width = 128; c.height = 1024;
-      var g2 = c.getContext('2d'), cw = 128 / SIGS;
-      for (var i = 0; i < SIGS; i++) {
-        var gr = g2.createLinearGradient(i * cw, 0, (i + 1) * cw, 0);
-        gr.addColorStop(0, '#d9d7d1'); gr.addColorStop(0.5, '#f7f6f2'); gr.addColorStop(1, '#cfccc5');
-        g2.fillStyle = gr; g2.fillRect(i * cw, 0, cw, 1024);
+    /* copertina aperta: nella piega si vede il dorso cucito — le segnature come bastoncini tondi,
+       separate da solchi scuri, il filo bianco che le attraversa a ogni stazione con i nodi sfilacciati */
+    var RR = cfg.rod, MG = RR * 0.3, G = SIGS * 2 * RR + 2 * MG, rods = new T3.Group(); book.add(rods); rods.visible = false;
+    (function () {
+      var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+      var FL = 0.62, RV = RR * 0.87, TOP = 2 * RV * FL;
+      var under = new T3.Mesh(new T3.PlaneGeometry(G + RR * 0.6, H * 0.992), new T3.MeshBasicMaterial({ color: lin(cfg.groove || '#5c5549') }));
+      under.rotation.x = -Math.PI / 2; under.position.set(-G / 2, 0.0002, 0); rods.add(under);
+      var cyl = new T3.CylinderGeometry(RV, RV, H * 0.985, 22, 1, true); cyl.rotateX(Math.PI / 2); cyl.scale(1, FL, 1);
+      var nr = cyl.attributes.normal, cc = new Float32Array(nr.count * 3);
+      for (var q = 0; q < nr.count; q++) {
+        var ny = nr.getY(q), nx = nr.getX(q), sh = ny > 0 ? 0.5 + 0.5 * Math.pow(ny, 0.7) : 0.5 + 0.42 * ny, d = 1 - sh * (1 - 0.1 * nx);
+        cc[q * 3] = 1 - d * 0.8; cc[q * 3 + 1] = 1 - d * 0.94; cc[q * 3 + 2] = 1 - d * 1.18;
       }
-      g2.strokeStyle = '#8f8b83'; g2.lineWidth = 2.2;
-      for (var k = 0; k < cfg.stations; k++) {
-        var y = 1024 * (0.06 + 0.88 * k / (cfg.stations - 1));
-        g2.beginPath();
-        for (var i2 = 0; i2 <= SIGS; i2++) { var x2 = i2 * cw, yy = y + (i2 % 2 ? 7 : -7); if (i2) g2.lineTo(x2, yy); else g2.moveTo(x2, yy); }
-        g2.stroke();
-        g2.fillStyle = '#a9a59d'; g2.fillRect(cw * 0.5 - 3, y - 9, 6, 18); g2.fillRect(128 - cw * 0.5 - 3, y - 9, 6, 18);
+      cyl.setAttribute('color', new T3.BufferAttribute(cc, 3));
+      var m = matte({ color: lin(cfg.rodColor || cfg.edge), vertexColors: true });
+      for (var i = 0; i < SIGS; i++) { var c = new T3.Mesh(cyl, m); c.position.set(-MG - (i + 0.5) * 2 * RR, RV * FL, 0); c.castShadow = true; rods.add(c); }
+      var tm = new T3.MeshLambertMaterial({ color: THREAD }), K = cfg.stations, tr = cfg.threadR || 0.0024, kr = cfg.knot || tr * 1.5;
+      var tuft = new T3.CylinderGeometry(1, 0.4, 1, 5, 1); tuft.translate(0, 0.5, 0);
+      function addTuft(p) {
+        var t = new T3.Mesh(tuft, tm); t.position.copy(p);
+        t.scale.set(tr * 0.45, kr * (1.6 + rnd() * 1.8), tr * 0.45);
+        t.rotation.set((rnd() - 0.5) * 2.2, rnd() * 6.28, (rnd() - 0.5) * 2.2); rods.add(t);
       }
-      var st = new T3.CanvasTexture(c); st.encoding = T3.sRGBEncoding; st.anisotropy = maxAniso;
-      sew = new T3.Mesh(new T3.PlaneGeometry(0.075, H * 0.985), new T3.MeshLambertMaterial({ map: st }));
-      sew.rotation.x = -Math.PI / 2; sew.receiveShadow = true; sew.visible = false; book.add(sew);
-    }
+      for (var k = 0; k < K; k++) {
+        var z = -H / 2 + 0.16 + (H - 0.32) * k / (K - 1), pts = [new T3.Vector3(RR * 0.6, Math.min(Y0, 0.003), z)];
+        for (var j = 0; j < SIGS; j++) {
+          var cx = -MG - (j + 0.5) * 2 * RR, w = (rnd() - 0.5) * tr * 1.2;
+          pts.push(new T3.Vector3(cx + RV * 0.62, TOP * 0.8 + tr * 0.7, z + w), new T3.Vector3(cx, TOP + tr * 0.75, z + w), new T3.Vector3(cx - RV * 0.62, TOP * 0.8 + tr * 0.7, z + w));
+          if (j < SIGS - 1) pts.push(new T3.Vector3(cx - RR, TOP * 0.42, z));
+        }
+        pts.push(new T3.Vector3(-G - RR * 0.5, COV * 0.7, z));
+        rods.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), pts.length * 5, tr, 6, false), tm));
+        for (j = 0; j < SIGS; j++) {
+          if ((j + k) % 2) continue;
+          var kn = new T3.Mesh(knotGeo, tm), kx = -MG - (j + 0.5) * 2 * RR + (rnd() - 0.5) * RR * 0.5;
+          kn.scale.set(kr * (1.0 + rnd() * 0.4), kr * 0.8, kr * (1.2 + rnd() * 0.5));
+          kn.position.set(kx, TOP + tr * 0.6, z + (rnd() - 0.5) * tr * 2); rods.add(kn);
+          if (rnd() < 0.7) addTuft(kn.position);
+        }
+      }
+    })();
 
     /* il foglio che gira */
     var SX = 46, SZ = 6, leafGeo = new T3.BufferGeometry();
@@ -184,10 +214,12 @@
       leafGeo.setAttribute('position', new T3.BufferAttribute(pos, 3)); leafGeo.setAttribute('color', new T3.BufferAttribute(col, 3));
       leafGeo.setAttribute('uv', new T3.Float32BufferAttribute(uv, 2)); leafGeo.setIndex(idx);
     })();
-    var lf = new T3.MeshLambertMaterial({ color: PAPER, vertexColors: true }), lb = new T3.MeshLambertMaterial({ color: PAPER, vertexColors: true, side: T3.BackSide });
+    var lf = matte({ color: PAPER, vertexColors: true }), lb = matte({ color: PAPER, vertexColors: true, side: T3.BackSide });
     lf.shadowSide = lb.shadowSide = T3.DoubleSide;
     var leafFront = new T3.Mesh(leafGeo, lf), leafBack = new T3.Mesh(leafGeo, lb);
-    leafFront.receiveShadow = leafBack.receiveShadow = true; leafFront.castShadow = leafBack.castShadow = true;
+    // il foglio proietta l'ombra sulle pagine ma non la riceve: un foglio sottile che si fa ombra da solo,
+    // quando passa a sinistra e resta di taglio rispetto alla luce, crea strisce che tremolano (shadow acne)
+    leafFront.receiveShadow = leafBack.receiveShadow = false; leafFront.castShadow = leafBack.castShadow = true;
     var leafGroup = new T3.Group(); leafGroup.add(leafFront, leafBack); leafGroup.visible = false; book.add(leafGroup);
     function bendLeaf(theta, grabZ, stiff, hy) {
       var p = leafGeo.attributes.position.array, c = leafGeo.attributes.color.array;
@@ -204,7 +236,7 @@
             px = x + (sx - x) * snap; py = y + (sy - y) * snap;
           }
           p[k] = px; p[k + 1] = py; p[k + 2] = -H / 2 + H * j / SZ;
-          var shade = 1 - (1 - ao(u)) * land; c[k] = c[k + 1] = c[k + 2] = shade;
+          var dk = (1 - ao(u)) * land; c[k] = 1 - dk * WR; c[k + 1] = 1 - dk * WG; c[k + 2] = 1 - dk * WB;
           var base = theta + (1 - t) * slope(u, curH.r) - t * slope(u, curH.l);
           var phi = Math.min(Math.PI, Math.max(0, base + b * (u * u) * (1 + corner)));
           x += Math.cos(phi) * du; y += Math.sin(phi) * du;
@@ -225,20 +257,29 @@
       var rTop = showR < NL ? rectoOf(showR) : null, lTop = showL > 0 ? versoOf(showL - 1) : null;
       R.set(hr, rTop ? tex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? tex(lTop) : null, null);
+      me.want = { l: lTop ? tex(lTop) : null, r: rTop ? tex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
+      var gk = 0;                                         // quanto è aperta la piega cucita (0 chiusa, 1 copertina aperta sulla prima pagina)
+      if (me.opened) {
+        if (!f) gk = L === 1 ? 1 : 0;
+        else if (f.leaf === 0) gk = f.theta / Math.PI;
+        else if (f.leaf === 1) gk = 1 - f.theta / Math.PI;
+      }
+      Lft.mesh.position.x = -G * gk; Lft.bottom.position.x = -W / 2 - G * gk;
+      rods.visible = gk > 0.002; rods.scale.set(Math.max(gk, 0.002), 1, 1);
       spine.visible = !me.opened && L === 0 && !f;
-      if (sew) { var sl = f ? Math.min(L, f.leaf) : L; sew.visible = me.opened && sl === 1; sew.position.set(-0.0375 - 0.004, hl + 0.0011, 0); }
       if (f) {
         leafGroup.visible = true;
         var rt = rectoOf(f.leaf), vt = versoOf(f.leaf);
         setMap(lf, rt ? tex(rt) : null); setMap(lb, vt ? tex(vt, true) : null);
         var hy = (CURVE ? Math.min(Y0, hr) * (1 - f.theta / Math.PI) + Math.min(Y0, Math.max(hl, 0.0001)) * (f.theta / Math.PI) : (hr + hl) / 2) + 0.0012;
-        leafGroup.position.set(0, hy, 0);
+        leafGroup.position.set(f.leaf === 0 ? -G * gk : 0, hy, 0);
         bendLeaf(f.theta, f.grabZ, f.leaf === 0, hy);
       } else leafGroup.visible = false;
-      for (var l = L - 2; l <= L + 3; l++) { if (l < 0 || l >= NL) continue; var a = rectoOf(l), b2 = versoOf(l); if (a) tex(a); if (b2) tex(b2, l !== 0); }
+      for (var l = L - 4; l <= L + 5; l++) { if (l < 0 || l >= NL) continue; var a = rectoOf(l), b2 = versoOf(l); if (a) tex(a); if (b2) tex(b2); }
       dirty = true;
     }
     this.layout = layout;
+    onTexReady.push(function () { layout(); });
     this.L = function () { return L; };
     this.reset = function () { L = 0; me.flip = null; me.opened = false; layout(); };
     this.animateFlip = function (target, ms, done) {
@@ -273,8 +314,8 @@
   }
 
   /* ---------- i due volumi ---------- */
-  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, wrap: true, paper: '#f6f5f1', edge: '#f1f0ec', thread: '#bdb9b1', sigs: 5, stations: 7, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', rodColor: '#d9d2c3', threadR: 0.0032, knot: 0.0058, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = [libro, catalogo];
   stackGroup.add(libro.root, catalogo.root);
 
@@ -289,7 +330,8 @@
   function distFor(m) {
     if (m === 'stack') return camera.aspect < 1 ? fitDist(W * 2.1, H * 1.25) : fitDist(W * 1.5, H * 1.2);
     if (m === 'apart') return camera.aspect < 1 ? fitDist(W * 2.0, H * 3.0) : fitDist(W * 4.1, H * 1.3);
-    return fitDist(2 * W * 1.06, H * 1.3);
+    var aw = active ? active.W : W, ah = active ? active.H : H;
+    return fitDist(2 * aw * 1.06, ah * 1.3);
   }
   function elFor(m) { return m === 'read' ? 1.22 : (m === 'apart' ? 0.5 : 0.38); }
   function place() {
