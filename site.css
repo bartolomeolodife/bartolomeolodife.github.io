@@ -290,3 +290,12 @@ main.grid:has(.cvsec){align-items:stretch}
 .libro-hero .libro3d{flex:1;height:auto;min-height:440px;margin-top:0}
 .libro-hero .libro-ctl{margin-top:8px}
 @media (max-width:700px){.libro-hero .libro3d{min-height:0;height:62vh}}
+
+.libro-scrub{display:block;-webkit-appearance:none;appearance:none;width:min(560px,80%);height:22px;margin:10px auto 0;background:none;cursor:pointer;touch-action:none}
+.libro-scrub[hidden]{display:none}
+.libro-scrub:focus{outline:none}
+.libro-scrub::-webkit-slider-runnable-track{height:1px;background:var(--mute)}
+.libro-scrub::-moz-range-track{height:1px;background:var(--mute)}
+.libro-scrub::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:3px;margin-top:-1px;background:var(--ink);border:0;border-radius:0;box-shadow:0 0 0 6px var(--paper)}
+.libro-scrub::-moz-range-thumb{width:22px;height:3px;background:var(--ink);border:0;border-radius:0;box-shadow:0 0 0 6px var(--paper)}
+.libro-scrub:active::-webkit-slider-thumb{width:30px}

@@ -325,6 +325,7 @@
       return D.p1 + ' ' + (lp || rp);
     };
     this.atEnd = function () { return L >= NL; };
+    this.goTo = function (l) { l = Math.max(1, Math.min(NL, l | 0)); if (l === L && !me.flip) return; me.flip = null; L = l; layout(); };
     this.setCenter = function (k) { book.position.set(-W / 2 * (1 - k), -(1 - k) * me.T / 2, 0); };
     layout();
   }
@@ -481,6 +482,11 @@
   var ctl = host.parentNode.querySelector('.libro-ctl');
   var bp = ctl.querySelector('.libro-prev'), bn = ctl.querySelector('.libro-next'), lab = ctl.querySelector('.libro-n'), bo = ctl.querySelector('.libro-open');
   var hint = host.querySelector('.libro-hint');
+  var lg = (document.documentElement.lang || 'it').slice(0, 2);
+  var sl = document.createElement('input'); sl.type = 'range'; sl.className = 'libro-scrub'; sl.min = 1; sl.step = 1; sl.hidden = true;
+  sl.setAttribute('aria-label', lg === 'en' ? 'Leaf through the book' : (lg === 'fr' ? 'Feuilleter le livre' : 'Sfoglia il libro'));
+  ctl.parentNode.insertBefore(sl, ctl.nextSibling);
+  sl.addEventListener('input', function () { if (mode !== 'read' || !active || busy) return; active.goTo(+sl.value); ui(); });
   function hintFor(m) { var h = D['hint' + m[0].toUpperCase() + m.slice(1)] || ''; if (coarse) h = h.split(' · ').filter(function (s) { return !/rotella|scroll|molette/i.test(s); }).join(' · '); return h; }
   function ui() {
     var reading = mode === 'read';
@@ -490,6 +496,7 @@
     bo.textContent = mode === 'stack' ? D.split : (mode === 'apart' ? D.join : D.close);
     host.classList.toggle('is-open', reading);
     if (hint) hint.textContent = hintFor(mode);
+    sl.hidden = !reading; if (reading && active) { sl.max = active.NL; if (document.activeElement !== sl) sl.value = active.L(); }
   }
   bp.addEventListener('click', function () { step(-1); });
   bn.addEventListener('click', function () { step(1); });
