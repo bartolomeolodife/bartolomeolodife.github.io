@@ -284,7 +284,7 @@
       var f = me.flip, showL = f ? Math.min(L, f.leaf) : L, showR = f ? Math.max(L, f.leaf + 1) : L;
       var hl = heights(showL).left, hr = heights(showR).right;
       CURVE = me.opened ? 1 : 0; curH.l = hl; curH.r = hr;
-      var rTop = showR < NL ? rectoOf(showR) : null, lTop = showL > 0 ? versoOf(showL - 1) : null;
+      var rTop = showR < NL ? rectoOf(showR) : (cfg.backInner ? cfg.base + cfg.backInner : null), lTop = showL > 0 ? versoOf(showL - 1) : null;
       R.set(hr, rTop ? pageTex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? pageTex(lTop) : null, null);
       me.want = { l: lTop ? pageTex(lTop) : null, r: rTop ? pageTex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
@@ -334,7 +334,7 @@
     };
     this.label = function () {
       if (!me.opened) return cfg.name;
-      var lp = L >= 2 ? 2 * (L - 1) : null, rp = L <= NP / 2 ? 2 * L - 1 : null;
+      var lp = L >= 2 ? 2 * (L - 1) : null, rp = L <= NP / 2 ? 2 * L - 1 : (cfg.backInner ? NP + 1 : null);
       if (lp && rp) return D.pn + ' ' + lp + '–' + rp;
       return D.p1 + ' ' + (lp || rp);
     };
@@ -346,7 +346,7 @@
 
   /* ---------- i due volumi ---------- */
   var libro = single
-    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp' })
+    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp', backInner: D.backInner })
     : new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = single ? [libro] : [libro, catalogo];
@@ -508,30 +508,34 @@
   function up(e) {
     delete ptrs[e.pointerId]; if (pinch) { if (Object.keys(ptrs).length < 2) pinch = null; return; }
     if (!drag) return; var d = drag; drag = null;
-    if (d.pan) return;
+    if (d.pan && d.moved >= 6) return;
     if (d.moved < 6) {
       if (mode === 'stack') { if (single) toRead(libro); else toApart(); return; }
       if (mode === 'apart') { var b = pickBook(e); if (b) toRead(b); return; }
       if (mode === 'read' && active) {
         if (active.flip && !active.flip.anim) { active.flip = null; active.layout(); }
-        var p = planeHit(e); if (p) { clearTimeout(clickT); clickT = setTimeout(function () { step(p.x >= 0 ? 1 : -1); }, 240); }
+        var p = planeHit(e); if (!p) return;
+        // doppio clic vero (due clic ravvicinati prima che la pagina parta) = ingrandisci; un clic = gira
+        if (clickT && e.timeStamp - clickT.t < 260) { clearTimeout(clickT.h); clickT = 0; dblZoom(e); return; }
+        var me2 = { t: e.timeStamp, h: 0 };
+        me2.h = setTimeout(function () { if (clickT === me2) clickT = 0; step(p.x >= 0 ? 1 : -1); }, 230); clickT = me2;
       }
       return;
     }
     if (mode === 'read' && active && active.flip && !active.flip.anim) active.animateFlip(active.flip.theta > Math.PI / 2 ? Math.PI : 0, 520);
   }
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('dblclick', function (e) {
-    clearTimeout(clickT);
-    if (mode !== 'read' || busy) return; e.preventDefault();
+  cv.addEventListener('dblclick', function (e) { e.preventDefault(); });
+  function dblZoom(e) {
+    if (mode !== 'read' || busy) return;
     var from = { zoom: S.zoom, px: S.px, pz: S.pz };
     zoomAt(e.clientX, e.clientY, S.zoom > 1.5 ? 1 : 3);
     var to = { zoom: S.zoom, px: S.px, pz: S.pz }; S.zoom = from.zoom; S.px = from.px; S.pz = from.pz;
     tween(to, 450);
-  });
+  }
   cv.addEventListener('wheel', function (e) {
     if (mode === 'read') {
-      if (busy || (S.zoom <= 1.001 && e.deltaY > 0 && !e.ctrlKey)) return;
+      if (busy || (S.zoom <= 1.001 && !e.ctrlKey)) return;     // la rotella scorre la pagina; si ingrandisce col doppio clic o con due dita
       e.preventDefault(); zoomAt(e.clientX, e.clientY, S.zoom * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0025))); return;
     }
     if (busy) return; e.preventDefault();
@@ -540,8 +544,10 @@
   function step(dir) {
     if (mode !== 'read' || !active || busy) return;
     if (dir < 0 && active.L() <= 1) { closeRead(); return; }
-    active.turn(dir);
+    if (active.flip) { queued = dir; return; }               // clic durante il giro: la pagina dopo parte appena finisce
+    active.turn(dir, 700, function () { if (queued) { var q = queued; queued = 0; requestAnimationFrame(function () { step(q); }); } });
   }
+  var queued = 0;
 
   /* ---------- controlli ---------- */
   var ctl = host.parentNode.querySelector('.libro-ctl');
