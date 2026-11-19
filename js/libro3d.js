@@ -77,7 +77,7 @@
     this.root = new T3.Group(); this.pivot = new T3.Group(); this.geo = new T3.Group();
     this.root.add(this.pivot); this.pivot.add(this.geo);
     var book = this.geo;
-    function pageName(p) { return cfg.base + ('00' + p).slice(-3) + '.webp'; }
+    function pageName(p) { if (cfg.map) p = cfg.map[p - 1]; return cfg.base + ('00' + p).slice(-3) + '.webp'; }
     function rectoOf(l) { return l === 0 ? cfg.base + cfg.cover : (l <= NP / 2 ? pageName(2 * l - 1) : (l === NL && cfg.backInner ? cfg.base + cfg.backInner : null)); }
     function versoOf(l) { return l === 0 ? (cfg.inner ? cfg.base + cfg.inner : null) : (l <= NP / 2 ? pageName(2 * l) : (l === NL && cfg.backInner ? cfg.base + cfg.back : null)); }
     function matte(o) { o.specular = 0x000000; o.shininess = 0; return new T3.MeshPhongMaterial(o); }   // carta opaca, luce calcolata per pixel: niente bande sul foglio curvo
@@ -335,7 +335,8 @@
     this.label = function () {
       if (!me.opened) return cfg.name;
       if (L > NL) return D.retro || cfg.name;
-      var lp = L >= 2 ? 2 * (L - 1) : null, rp = L <= NP / 2 ? 2 * L - 1 : (cfg.backInner ? NP + 1 : null);
+      function num(n) { return cfg.map ? cfg.map[n - 1] : n; }
+      var lp = L >= 2 ? num(2 * (L - 1)) : null, rp = L <= NP / 2 ? num(2 * L - 1) : (cfg.backInner ? (parseInt(cfg.backInner, 10) || NP + 1) : null);
       if (lp && rp) return D.pn + ' ' + lp + '–' + rp;
       return D.p1 + ' ' + (lp || rp);
     };
@@ -347,10 +348,12 @@
   }
 
   /* ---------- i due volumi ---------- */
+  // le pagine bianche finali della stampa non si mostrano: si chiude sull'ultima pagina stampata
+  function seq(a, b) { var r = []; for (var i = a; i <= b; i++) r.push(i); return r; }
   var libro = single
     ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp', backInner: D.backInner })
-    : new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+    : new Book({ name: D.nameLibro, base: D.base, pages: 204, map: seq(1, 203).concat([206]), paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2', backInner: '207.webp' });
+  var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 76, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2', backInner: '079.webp' });
   var books = single ? [libro] : [libro, catalogo];
   books.forEach(function (b) { stackGroup.add(b.root); });
 
