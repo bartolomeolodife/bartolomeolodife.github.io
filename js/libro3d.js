@@ -319,12 +319,12 @@
         if (k >= 1) { me.flip = null; L = target >= Math.PI - 1e-3 ? f.leaf + 1 : f.leaf; layout(); done && done(); ui(); }
       };
     };
-    this.turn = function (dir) {
+    this.turn = function (dir, ms, done) {
       if (!me.opened || me.flip) return false;
       if (dir > 0 && L >= NL) return false; if (dir < 0 && L <= 1) return false;
       var leaf = dir > 0 ? L : L - 1;
       me.flip = { leaf: leaf, theta: dir > 0 ? 0 : Math.PI, grabZ: 0.35 }; layout();
-      me.animateFlip(dir > 0 ? Math.PI : 0, 900); return true;
+      me.animateFlip(dir > 0 ? Math.PI : 0, ms || 900, done); return true;
     };
     this.openCover = function (done) {
       me.opened = true; layout();
@@ -546,7 +546,23 @@
   var sl = document.createElement('input'); sl.type = 'range'; sl.className = 'libro-scrub'; sl.min = 1; sl.step = 1; sl.hidden = true;
   sl.setAttribute('aria-label', lg === 'en' ? 'Leaf through the book' : (lg === 'fr' ? 'Feuilleter le livre' : 'Sfoglia il libro'));
   ctl.parentNode.insertBefore(sl, ctl.nextSibling);
-  sl.addEventListener('input', function () { if (mode !== 'read' || !active || busy) return; active.goTo(+sl.value); ui(); });
+  // la lineetta sfoglia davvero: le pagine girano una dopo l'altra, veloci; se il salto è lungo si avvicina di colpo e sfoglia le ultime
+  var scrubTo = null, scrubbing = false;
+  function pump() {
+    if (mode !== 'read' || !active || busy || scrubTo === null) { scrubbing = false; return; }
+    if (active.flip) return;
+    var L = active.L(), d = scrubTo - L;
+    if (!d) { scrubbing = false; scrubTo = null; ui(); return; }
+    var dir = d > 0 ? 1 : -1, n = Math.abs(d);
+    if (n > 7) { active.goTo(scrubTo - dir * 7); ui(); L = active.L(); n = 7; }
+    scrubbing = true;
+    if (!active.turn(dir, n > 3 ? 170 : (n > 1 ? 260 : 420), function () { requestAnimationFrame(pump); })) { scrubbing = false; scrubTo = null; }
+  }
+  sl.addEventListener('input', function () {
+    if (mode !== 'read' || !active || busy) return;
+    scrubTo = Math.max(1, Math.min(active.NL, +sl.value)); lab.textContent = active.label();
+    if (!scrubbing) pump();
+  });
   function hintFor(m) { var h = D['hint' + m[0].toUpperCase() + m.slice(1)] || ''; if (coarse) h = h.split(' · ').filter(function (s) { return !/rotella|scroll|molette/i.test(s); }).join(' · '); return h; }
   function ui() {
     var reading = mode === 'read';
