@@ -161,6 +161,17 @@
     var knotGeo = new T3.SphereGeometry(1, 8, 6);
     (function () {
       var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+      if (cfg.saddle) {
+        // fanzine a punto metallico: un solo fascicolo piegato, dorso tondo di carta e due punti d'acciaio come nelle foto
+        var Rs = (BLOCK + 2 * COV) / 2, sx = 0.55;
+        var fold = new T3.Mesh(halfTube(Rs, Rs), matte({ color: new T3.Color(PAPER).multiplyScalar(1.06), side: T3.DoubleSide })); fold.scale.set(sx, 1, 1); fold.castShadow = true; spine.add(fold);
+        var steel = new T3.MeshPhongMaterial({ color: 0x7f8388, specular: 0xbfc3c8, shininess: 90 });
+        [-1, 1].forEach(function (k) {
+          var st = new T3.Mesh(new T3.CylinderGeometry(0.0028, 0.0028, H * 0.042, 8), steel); st.rotation.x = Math.PI / 2;   // filo d'acciaio di circa mezzo millimetro, lungo 12 mm
+          st.position.set(-Rs * sx * 1.15 - 0.0012, Rs, k * H * 0.37); spine.add(st);
+        });
+        return;
+      }
       if (cfg.wrap) {
         // catalogo: il dorso è coperto, bianco e pulito come nelle foto
         var Rw = (BLOCK + 2 * COV) / 2, wm = matte({ color: lin(cfg.wrap), side: T3.DoubleSide });
@@ -365,7 +376,7 @@
   // le pagine bianche finali della stampa non si mostrano: si chiude sull'ultima pagina stampata
   function seq(a, b) { var r = []; for (var i = a; i <= b; i++) r.push(i); return r; }
   var libro = single
-    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp', backInner: D.backInner })
+    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, saddle: true, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp', backInner: D.backInner })
     : new Book({ name: D.nameLibro, base: D.base, pages: 204, map: seq(1, 203).concat([206]), paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2', backInner: '207.webp' });
   var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 76, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2', backInner: '079.webp' });
   var books = single ? [libro] : [libro, catalogo];
