@@ -12,7 +12,7 @@
   function lin(hex) { return new T3.Color(hex).convertSRGBToLinear(); }
 
   /* ---------- scena condivisa ---------- */
-  var renderer = new T3.WebGLRenderer({ antialias: true, alpha: true });
+  var renderer = new T3.WebGLRenderer({ antialias: true, alpha: true, precision: 'highp' });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputEncoding = T3.sRGBEncoding;
   renderer.shadowMap.enabled = true;
@@ -393,6 +393,9 @@
     var d = S.dist / S.zoom, el = S.el;
     camera.position.set(S.px, Math.sin(el) * d, Math.cos(el) * d + S.pz);
     camera.lookAt(S.px, S.look, S.look * 0.34 + S.pz);
+    // piani di ritaglio stretti attorno ai libri: sui telefoni il depth buffer è meno preciso e le pagine sovrapposte sfarfallavano
+    var nr = Math.max(0.05, d * 0.3), fr = d * 3.5;
+    if (Math.abs(camera.near - nr) > 1e-4 || Math.abs(camera.far - fr) > 1e-3) { camera.near = nr; camera.far = fr; camera.updateProjectionMatrix(); }
   }
   var tweens = [];
   function tween(to, ms, done) {

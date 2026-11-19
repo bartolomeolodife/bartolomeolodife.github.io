@@ -69,12 +69,12 @@ html.intro-go .intro-dot,html.intro-go .intro-lab{display:none}
 .pcard{text-decoration:none;flex:none;display:flex;flex-direction:column;gap:6px;width:calc(var(--ph)*.8)}
 .pcard .pic{height:var(--ph);overflow:hidden;background:var(--tint)}
 .pcard .pic img{width:100%;height:100%;object-fit:cover;transition:transform .5s;user-select:none}
-.pcard:hover .pic img{transform:scale(1.03)}
+@media (hover:hover){.pcard:hover .pic img{transform:scale(1.03)}}
 .pcard .pic{perspective:2400px;overflow:visible;background:none;position:relative}
-.pcard .flip{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.2,.75,.2,1)}
+.pcard .flip{position:absolute;inset:0;-webkit-transform-style:preserve-3d;transform-style:preserve-3d;will-change:transform;transition:transform .8s cubic-bezier(.2,.75,.2,1)}
 .pcard .flip>img,.pcard .back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.pcard .flip>img{background:var(--tint)}
-.pcard .back{transform:rotateY(180deg);background:var(--paper);border:1px solid var(--ink);padding:clamp(12px,4.6cqh,18px);display:flex;flex-direction:column;justify-content:space-between;gap:clamp(8px,3.5cqh,14px);color:var(--ink);overflow:hidden;container-type:size}
+.pcard .flip>img{background:var(--tint);-webkit-transform:rotateY(0deg) translateZ(.5px);transform:rotateY(0deg) translateZ(.5px)}
+.pcard .back{-webkit-transform:rotateY(180deg) translateZ(.5px);transform:rotateY(180deg) translateZ(.5px);background:var(--paper);border:1px solid var(--ink);padding:clamp(12px,4.6cqh,18px);display:flex;flex-direction:column;justify-content:space-between;gap:clamp(8px,3.5cqh,14px);color:var(--ink);overflow:hidden;container-type:size}
 .pcard .bk-top,.pcard .bk-bot{display:flex;font-size:clamp(11px,3.1cqh,12px);line-height:1.3}
 .pcard .bk-top{justify-content:space-between}
 .pcard .bk-mid{display:flex;flex-direction:column;gap:clamp(8px,3.5cqh,14px)}
@@ -83,7 +83,7 @@ html.intro-go .intro-dot,html.intro-go .intro-lab{display:none}
 .pcard .bk-bot{flex-direction:column;gap:clamp(3px,1.5cqh,6px);color:var(--mute)}
 .pcard .bk-ex{color:var(--ink)}
 .pcard .bk-go{color:var(--ink);margin-top:clamp(2px,1.5cqh,6px);text-decoration:underline;text-underline-offset:3px}
-@media (hover:hover) and (pointer:fine){.pcard:hover .flip{transform:rotateY(180deg)}.pcard:hover .pic img{transform:none}}
+@media (hover:hover) and (pointer:fine){@media (hover:hover){.pcard:hover .flip{transform:rotateY(180deg)}}@media (hover:hover){.pcard:hover .pic img{transform:none}}}
 .pcard.is-flipped .flip{transform:rotateY(180deg)}
 @media (hover:none){.pcard .bk-go{align-self:flex-start;padding:8px 0;margin:-8px 0}}
 @media (prefers-reduced-motion:reduce){.pcard .flip{transition:none}}
