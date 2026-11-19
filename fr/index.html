@@ -27,8 +27,22 @@
 <link rel="icon" href="../favicon.svg?v=2" type="image/svg+xml">
 <link rel="icon" href="../favicon.ico?v=2" sizes="any">
 <link rel="icon" type="image/png" sizes="192x192" href="../icon-192.png"><link rel="apple-touch-icon" href="../apple-touch-icon.png?v=2"> <!-- /icons -->
+<script>try{if(!sessionStorage.getItem('bl-in'))document.documentElement.classList.add('intro')}catch(e){}</script>
+<style>
+.intro-v{display:none}
+html.intro .intro-v{display:block;position:fixed;inset:0;z-index:10000;background:#fff;-webkit-mask:radial-gradient(circle at var(--x,50%) var(--y,50%),transparent var(--r,0px),#000 calc(var(--r,0px) + .5px));mask:radial-gradient(circle at var(--x,50%) var(--y,50%),transparent var(--r,0px),#000 calc(var(--r,0px) + .5px))}
+html.intro body{overflow:hidden}
+.intro-dot{position:absolute;left:50%;top:50%;width:84px;height:84px;margin:-42px 0 0 -42px;border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.intro-dot::before{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#111;animation:introPulse 1.8s cubic-bezier(.4,0,.2,1) infinite}
+.intro-dot:hover::before,.intro-dot:focus-visible::before{animation:none;transform:scale(1.6)}
+.intro-dot:focus-visible{outline:none}
+@keyframes introPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
+html.intro-go .intro-dot{display:none}
+@media (prefers-reduced-motion:reduce){.intro-dot::before{animation:none}}
+</style>
 </head>
 <body>
+<div class="intro-v" id="intro"><button type="button" class="intro-dot" aria-label="Entrer dans le site"></button></div>
 <div class="site">
 <header class="rule top"><a href="index.html">Bartolomeo Lodi-Fè</a><span class="mid">Étudiant en design, <a href="https://www.isiaroma.it" target="_blank" rel="noopener">ISIA Roma Design</a></span><nav><a href="index.html" aria-current="page">Projets</a><a href="come-lavoro.html">Comment je travaille</a><a href="percorso.html">Parcours</a><a href="percorso.html#contatti">Contact</a><span class="lang"><a href="../index.html" hreflang="it" lang="it">IT</a><a href="../en/index.html" hreflang="en" lang="en">EN</a><a href="index.html" hreflang="fr" lang="fr" aria-current="true">FR</a></span></nav></header>
 <main class="home">
@@ -94,6 +108,16 @@ var on=null;function off(){if(on){on.classList.remove('is-flipped');on=null;}}
 r.addEventListener('click',function(e){var c=e.target.closest('.pcard');if(!c)return;if(c===on&&e.target.closest('.bk-go'))return;e.preventDefault();if(c===on){off();return;}off();c.classList.add('is-flipped');on=c;});
 r.addEventListener('scroll',function(){if(!on)return;var b=on.getBoundingClientRect();if(b.right<0||b.left>innerWidth)off();},{passive:true});
 document.addEventListener('click',function(e){if(on&&!e.target.closest('#prow'))off();});})();
+</script>
+<script>
+(function(){var v=document.getElementById('intro');if(!v||!document.documentElement.classList.contains('intro'))return;
+var b=v.querySelector('.intro-dot'),root=document.documentElement;b.focus({preventScroll:true});
+function open(){if(root.classList.contains('intro-go'))return;root.classList.add('intro-go');try{sessionStorage.setItem('bl-in','1')}catch(e){}
+ var W=innerWidth,H=innerHeight,R=Math.hypot(W,H)/2+20,t0=null,D=matchMedia('(prefers-reduced-motion: reduce)').matches?1:1100;
+ v.style.setProperty('--r','9px');
+ function f(t){if(t0===null)t0=t;var k=Math.min(1,(t-t0)/D),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;v.style.setProperty('--r',(9+(R-9)*e)+'px');if(k<1)requestAnimationFrame(f);else{root.classList.remove('intro','intro-go');v.remove()}}
+ requestAnimationFrame(f);}
+b.addEventListener('click',open);document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')open()},{once:true});})();
 </script>
 <footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Rome</span><span>Bartolomeo Lodi-Fè</span></footer>
 </div>
