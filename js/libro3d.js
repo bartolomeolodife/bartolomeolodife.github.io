@@ -305,7 +305,13 @@
         leafGroup.position.set(f.leaf === 0 ? -G * gk : 0, hy, 0);
         bendLeaf(f.theta, f.grabZ, f.leaf === 0, hy);
       } else leafGroup.visible = false;
-      for (var l = L - 4; l <= L + 5; l++) { if (l < 0 || l >= NL) continue; var a = rectoOf(l), b2 = versoOf(l); if (a) tex(a); if (b2) tex(b2); }
+      for (var l = L - 4; l <= L + 5; l++) { if (l < 0 || l > NL) continue; var a = rectoOf(l), b2 = versoOf(l); if (a) tex(a); if (b2) tex(b2); }
+      // le pagine lontane si liberano: sui telefoni la memoria video piena faceva sparire e ricomparire le immagini
+      var keep = {}; for (l = L - 7; l <= L + 8; l++) { if (l < 0 || l > NL) continue; keep[rectoOf(l)] = keep[versoOf(l)] = 1; }
+      Object.keys(cache).forEach(function (u) {
+        if (u.indexOf(cfg.base) !== 0 || u.indexOf('/hd/') >= 0 || !/\/\d{3}\.webp$/.test(u) || keep[u] || !cache[u].a._ready) return;
+        cache[u].a.dispose(); cache[u].m.dispose(); delete cache[u];
+      });
       dirty = true;
     }
     this.layout = layout;
@@ -321,11 +327,19 @@
       };
     };
     this.turn = function (dir, ms, done) {
-      if (!me.opened || me.flip) return false;
+      if (!me.opened || me.flip || me.wait) return false;
       if (dir > 0 && L >= me.maxL) return false; if (dir < 0 && L <= 1) return false;
       var leaf = dir > 0 ? L : L - 1;
-      me.flip = { leaf: leaf, theta: dir > 0 ? 0 : Math.PI, grabZ: 0.35 }; layout();
-      me.animateFlip(dir > 0 ? Math.PI : 0, ms || 900, done); return true;
+      // la pagina parte solo quando le sue immagini (e quelle che scopre) sono pronte: sui telefoni si vedeva la pagina di prima
+      var need = [rectoOf(leaf), versoOf(leaf), rectoOf(leaf + 1), leaf > 0 ? versoOf(leaf - 1) : null].filter(Boolean).map(function (u) { return pageTex(u); });
+      var t0 = performance.now(); me.wait = true;
+      (function go() {
+        if (need.some(function (t) { return !t._ready; }) && performance.now() - t0 < 2500) { setTimeout(go, 40); return; }
+        me.wait = false;
+        me.flip = { leaf: leaf, theta: dir > 0 ? 0 : Math.PI, grabZ: 0.35 }; layout();
+        me.animateFlip(dir > 0 ? Math.PI : 0, ms || 900, done);
+      })();
+      return true;
     };
     this.openCover = function (done) {
       me.opened = true; layout();
@@ -552,7 +566,7 @@
   function step(dir) {
     if (mode !== 'read' || !active || busy) return;
     if (dir < 0 && active.L() <= 1) { closeRead(); return; }
-    if (active.flip) { queued = dir; return; }               // clic durante il giro: la pagina dopo parte appena finisce
+    if (active.flip || active.wait) { queued = dir; return; }               // clic durante il giro: la pagina dopo parte appena finisce
     var b = active, wasEnd = b.L() > b.NL;
     if (wasEnd && dir < 0 && S.zoom <= 1.001) tween({ px: 0 }, 600);
     active.turn(dir, 700, function () {
@@ -573,7 +587,7 @@
   var scrubTo = null, scrubbing = false;
   function pump() {
     if (mode !== 'read' || !active || busy || scrubTo === null) { scrubbing = false; return; }
-    if (active.flip) return;
+    if (active.flip || active.wait) return;
     var L = active.L(), d = scrubTo - L;
     if (!d) { scrubbing = false; scrubTo = null; ui(); return; }
     var dir = d > 0 ? 1 : -1, n = Math.abs(d);
