@@ -8,6 +8,7 @@
   var W = 2.30, H = 3.10;                                   // formato 230 × 310 mm (in dm)
   var still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   var coarse = matchMedia('(pointer: coarse)').matches;
+  var single = !!D.single;                                  // un volume solo (Via di fuga): si gira, clic e si apre
   function lin(hex) { return new T3.Color(hex).convertSRGBToLinear(); }
 
   /* ---------- scena condivisa ---------- */
@@ -78,7 +79,7 @@
     var book = this.geo;
     function pageName(p) { return cfg.base + ('00' + p).slice(-3) + '.webp'; }
     function rectoOf(l) { return l === 0 ? cfg.base + cfg.cover : (l <= NP / 2 ? pageName(2 * l - 1) : null); }
-    function versoOf(l) { return l === 0 ? null : (l <= NP / 2 ? pageName(2 * l) : null); }
+    function versoOf(l) { return l === 0 ? (cfg.inner ? cfg.base + cfg.inner : null) : (l <= NP / 2 ? pageName(2 * l) : null); }
     function matte(o) { o.specular = 0x000000; o.shininess = 0; return new T3.MeshPhongMaterial(o); }   // carta opaca, luce calcolata per pixel: niente bande sul foglio curvo
     function matPaper(side) { return new T3.MeshLambertMaterial({ color: PAPER, side: side || T3.FrontSide }); }
     var WHITE = new T3.Color(0xffffff);
@@ -344,15 +345,17 @@
   }
 
   /* ---------- i due volumi ---------- */
-  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var books = [libro, catalogo];
-  stackGroup.add(libro.root, catalogo.root);
+  var libro = single
+    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp' })
+    : new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var books = single ? [libro] : [libro, catalogo];
+  books.forEach(function (b) { stackGroup.add(b.root); });
 
   /* ---------- pose: impilati / separati / lettura ---------- */
   var mode = 'stack', active = null, busy = false;
   var S = { yaw: 0.95, pitch: 0.36, el: 0.38, dist: 10, look: 0, sep: 0, read: 0, zoom: 1, px: 0, pz: 0 };
-  libro.pose = { yaw: 0.85, pitch: 0.36 }; catalogo.pose = { yaw: 0.6, pitch: 0.42 };
+  libro.pose = { yaw: 0.85, pitch: 0.36 }; if (catalogo) catalogo.pose = { yaw: 0.6, pitch: 0.42 };
   function fitDist(wide, high) {
     var a = camera.aspect, t = Math.tan(T3.MathUtils.degToRad(camera.fov / 2));
     return Math.max(high / 2 / t, wide / 2 / (t * a));
@@ -367,11 +370,11 @@
   function place() {
     var tb = libro.T, k = S.sep, r = S.read, side = camera.aspect < 1 ? 0 : 1;
     var dx = W * 0.85 * side, dz = H * 0.78 * (1 - side);
-    libro.root.position.set(-dx * k, 0, -dz * k);
-    catalogo.root.position.set(0.12 * (1 - k) + dx * k, (tb + 0.0006) * (1 - k), -0.08 * (1 - k) + dz * k);
-    catalogo.root.rotation.y = -0.07 * (1 - k);
+    libro.root.position.set(single ? 0 : -dx * k, 0, single ? 0 : -dz * k);
+    if (catalogo) catalogo.root.position.set(0.12 * (1 - k) + dx * k, (tb + 0.0006) * (1 - k), -0.08 * (1 - k) + dz * k);
+    if (catalogo) catalogo.root.rotation.y = -0.07 * (1 - k);
     stackGroup.rotation.set(S.pitch * (1 - k), S.yaw * (1 - k), 0, 'YXZ');
-    stackGroup.position.y = -(tb + catalogo.T) / 2 * (1 - k);
+    stackGroup.position.y = -(tb + (catalogo ? catalogo.T : 0)) / 2 * (1 - k);
     books.forEach(function (b) {
       var p = b.pose, isA = b === active, rr = isA ? r : 0;
       b.pivot.rotation.set(p.pitch * k * (1 - rr), p.yaw * k * (1 - rr), 0, 'YXZ');
@@ -408,10 +411,11 @@
     tween({ sep: 0, el: elFor('stack'), dist: distFor('stack') }, 1100, function () { busy = false; ui(); });
   }
   function toRead(b) {
-    if (busy || mode !== 'apart') return; busy = true; active = b; S.zoom = 1; S.px = S.pz = 0;
+    if (busy || !(mode === 'apart' || (single && mode === 'stack'))) return;
+    var fromStack = mode === 'stack'; if (fromStack) b.pose = { yaw: shortAngle(S.yaw), pitch: S.pitch }; busy = true; active = b; S.zoom = 1; S.px = S.pz = 0;
     b.pose.yaw = shortAngle(b.pose.yaw);
     mode = 'read'; ui();
-    tween({ read: 1, el: elFor('read'), dist: distFor('read'), look: 0.35 }, 1150, function () {
+    tween({ read: 1, sep: 1, el: elFor('read'), dist: distFor('read'), look: 0.35 }, 1150, function () {
       b.openCover(function () { busy = false; ui(); });
     });
   }
@@ -419,7 +423,8 @@
     if (busy || mode !== 'read' || !active || active.flip) return; busy = true;
     host.classList.add('fade');
     setTimeout(function () {
-      setHD(false); active.reset(); S.read = 0; S.look = 0; S.zoom = 1; S.px = S.pz = 0; S.el = elFor('apart'); S.dist = distFor('apart'); active = null; mode = 'apart';
+      setHD(false); active.reset(); S.read = 0; S.look = 0; S.zoom = 1; S.px = S.pz = 0;
+      if (single) { mode = 'stack'; S.sep = 0; S.yaw = 0.95; S.pitch = 0.36; S.el = elFor('stack'); S.dist = distFor('stack'); active = null; host.classList.remove('fade'); busy = false; ui(); dirty = true; return; } S.el = elFor('apart'); S.dist = distFor('apart'); active = null; mode = 'apart';
       host.classList.remove('fade'); busy = false; ui(); dirty = true;
     }, 320);
   }
@@ -449,10 +454,10 @@
   }
   function pickBook(e) {
     setRay(e);
-    var hits = ray.intersectObjects([libro.root, catalogo.root], true);
+    var hits = ray.intersectObjects(books.map(function (b) { return b.root; }), true);
     if (!hits.length) return null;
-    var o = hits[0].object; while (o && o !== libro.root && o !== catalogo.root) o = o.parent;
-    return o === libro.root ? libro : (o === catalogo.root ? catalogo : null);
+    var o = hits[0].object; while (o && books.every(function (b) { return b.root !== o; })) o = o.parent;
+    return o ? books.filter(function (b) { return b.root === o; })[0] : null;
   }
   var drag = null, cv = renderer.domElement, idle = 0, vel = { yaw: 0, pitch: 0, b: null };
   cv.style.touchAction = 'pan-y';
@@ -505,7 +510,7 @@
     if (!drag) return; var d = drag; drag = null;
     if (d.pan) return;
     if (d.moved < 6) {
-      if (mode === 'stack') { toApart(); return; }
+      if (mode === 'stack') { if (single) toRead(libro); else toApart(); return; }
       if (mode === 'apart') { var b = pickBook(e); if (b) toRead(b); return; }
       if (mode === 'read' && active) {
         if (active.flip && !active.flip.anim) { active.flip = null; active.layout(); }
@@ -576,7 +581,7 @@
   }
   bp.addEventListener('click', function () { step(-1); });
   bn.addEventListener('click', function () { step(1); });
-  bo.addEventListener('click', function () { if (mode === 'stack') toApart(); else if (mode === 'apart') toStack(); else closeRead(); });
+  bo.addEventListener('click', function () { if (mode === 'stack') { if (single) toRead(libro); else toApart(); } else if (mode === 'apart') toStack(); else closeRead(); });
   var vis = false;
   new IntersectionObserver(function (e) { vis = e[0].isIntersecting; if (vis) { dirty = true; loop(); } }, { threshold: 0.05 }).observe(host);
   addEventListener('keydown', function (e) {
