@@ -289,7 +289,7 @@ html,body{height:auto}
     buildLegend();
     document.getElementById('load').style.display='none';
     apply(0);
-    if(!reduce){ setTimeout(function(){ setTarget(1); }, 800); } else { setTarget(1); t = 1; apply(1); }
+    setTarget(0); t = 0; apply(0);
   }, undefined, function(){ fail(); });
 
   // ---------- Piallacci Tabù ----------
