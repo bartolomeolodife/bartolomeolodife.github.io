@@ -152,7 +152,7 @@
       var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
       if (cfg.wrap) {
         // catalogo: il dorso è coperto, bianco e pulito come nelle foto
-        var Rw = (BLOCK + 2 * COV) / 2, wm = matte({ color: lin(cfg.wrap) });
+        var Rw = (BLOCK + 2 * COV) / 2, wm = matte({ color: lin(cfg.wrap), side: T3.DoubleSide });
         var w = new T3.Mesh(halfTube(Rw, Rw), wm); w.scale.set(0.42 / 1.15, 1, 1); w.castShadow = true; spine.add(w);
         return;
       }
