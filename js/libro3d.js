@@ -12,7 +12,7 @@
   function lin(hex) { return new T3.Color(hex).convertSRGBToLinear(); }
 
   /* ---------- scena condivisa ---------- */
-  var renderer = new T3.WebGLRenderer({ antialias: true, alpha: true, precision: 'highp' });
+  var renderer = new T3.WebGLRenderer({ antialias: true, alpha: true, precision: 'highp', preserveDrawingBuffer: true });   // Safari su iPhone, se un fotogramma non viene ridisegnato, mostra a volte quello di prima: il buffer conservato lo evita
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputEncoding = T3.sRGBEncoding;
   renderer.shadowMap.enabled = true;
@@ -283,7 +283,7 @@
     function layout() {
       var f = me.flip, showL = f ? Math.min(L, f.leaf) : L, showR = f ? Math.max(L, f.leaf + 1) : L;
       var hl = heights(showL).left, hr = heights(showR).right;
-      CURVE = me.opened && !(L > NL && !f) ? 1 : 0;   // richiuso sul retro: niente curva della piega curH.l = hl; curH.r = hr;
+      CURVE = me.opened && !(L > NL && !f) ? 1 : 0; curH.l = hl; curH.r = hr;   // richiuso sul retro: niente curva della piega
       var rTop = showR < NL ? rectoOf(showR) : (showR === NL && cfg.backInner ? cfg.base + cfg.backInner : null), lTop = showL > 0 ? versoOf(showL - 1) : null;
       R.set(hr, rTop ? pageTex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? pageTex(lTop) : null, null);
