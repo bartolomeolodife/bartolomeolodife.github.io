@@ -50,6 +50,16 @@
     return mirror ? e.m : e.a;
   }
   function ready(t) { return !t || t._ready; }
+  // pagine in alta definizione quando si ingrandisce: si caricano solo quelle in vista, le più vecchie si liberano
+  var hdOn = false, hdList = [];
+  function pageTex(url, mirror) {
+    if (hdOn && /\/\d{3}\.webp$/.test(url)) {
+      var hu = url.replace(/(\d{3}\.webp)$/, 'hd/$1'), had = !!cache[hu], t = tex(hu, mirror);
+      if (!had) { hdList.push(hu); while (hdList.length > 12) { var o = hdList.shift(), e = cache[o]; if (e) { e.a.dispose(); e.m.dispose(); delete cache[o]; } } }
+      if (t._ready) return t;
+    }
+    return tex(url, mirror);
+  }
   function edgeTexture(r, g0, b) {
     var c = document.createElement('canvas'); c.width = 4; c.height = 512;
     var g = c.getContext('2d');
@@ -160,11 +170,14 @@
       var sh = BLOCK / SIGS, bands = [{ y: COV / 2 + 0.0004, r: COV / 2 + 0.0006, c: true }];
       for (var s = 0; s < SIGS; s++) bands.push({ y: COV + sh * (s + 0.5), r: sh / 2 * 0.97, dx: (rnd() - 0.5) * sh * 0.25 });
       bands.push({ y: COV + BLOCK + COV / 2 - 0.0004, r: COV / 2 + 0.0006, c: true });
+      // fondo pieno dietro le segnature: il dorso non lascia mai vedere le pagine
+      var bk = new T3.Mesh(new T3.PlaneGeometry(H * 0.999, BLOCK + 2 * COV - 0.0004), matte({ color: new T3.Color(EDGE).multiplyScalar(0.7), side: T3.DoubleSide }));
+      bk.rotation.y = -Math.PI / 2; bk.position.set(-0.0012, (BLOCK + 2 * COV) / 2, 0); spine.add(bk);
       bands.forEach(function (b) {
         var g = halfTube(b.r, b.y), nr = g.attributes.normal, cc = new Float32Array(nr.count * 3);
         for (var q = 0; q < nr.count; q++) { var nx = -nr.getX(q), k = 0.62 + 0.38 * Math.pow(Math.max(0, nx), 0.8), d = 1 - k; cc[q*3] = 1 - d * 0.8; cc[q*3+1] = 1 - d * 0.92; cc[q*3+2] = 1 - d * 1.15; }
         g.setAttribute('color', new T3.BufferAttribute(cc, 3));
-        var mm = new T3.Mesh(g, matte({ color: b.c ? PAPER : EDGE, vertexColors: true })); mm.position.x = b.dx || 0; mm.castShadow = true; spine.add(mm);
+        var mm = new T3.Mesh(g, matte({ color: b.c ? PAPER : EDGE, vertexColors: true, side: T3.DoubleSide })); mm.position.x = b.dx || 0; mm.castShadow = true; spine.add(mm);
       });
       // il filo: a ogni stazione una catenella che lega ogni segnatura alla successiva
       var tm = matte({ color: THREAD }), K = cfg.stations, tr = cfg.threadR || 0.0016;
@@ -271,9 +284,9 @@
       var hl = heights(showL).left, hr = heights(showR).right;
       CURVE = me.opened ? 1 : 0; curH.l = hl; curH.r = hr;
       var rTop = showR < NL ? rectoOf(showR) : null, lTop = showL > 0 ? versoOf(showL - 1) : null;
-      R.set(hr, rTop ? tex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
-      Lft.set(hl, lTop ? tex(lTop) : null, null);
-      me.want = { l: lTop ? tex(lTop) : null, r: rTop ? tex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
+      R.set(hr, rTop ? pageTex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
+      Lft.set(hl, lTop ? pageTex(lTop) : null, null);
+      me.want = { l: lTop ? pageTex(lTop) : null, r: rTop ? pageTex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
       var gk = 0; if (false)                             // quanto è aperta la piega cucita (0 chiusa, 1 copertina aperta sulla prima pagina)
       if (me.opened) {
         if (!f) gk = L === 1 ? 1 : 0;
@@ -286,7 +299,7 @@
       if (f) {
         leafGroup.visible = true;
         var rt = rectoOf(f.leaf), vt = versoOf(f.leaf);
-        setMap(lf, rt ? tex(rt) : null); setMap(lb, vt ? tex(vt, true) : null);
+        setMap(lf, rt ? pageTex(rt) : null); setMap(lb, vt ? pageTex(vt, true) : null);
         var hy = (CURVE ? Math.min(Y0, hr) * (1 - f.theta / Math.PI) + Math.min(Y0, Math.max(hl, 0.0001)) * (f.theta / Math.PI) : (hr + hl) / 2) + 0.0012;
         leafGroup.position.set(f.leaf === 0 ? -G * gk : 0, hy, 0);
         bendLeaf(f.theta, f.grabZ, f.leaf === 0, hy);
@@ -338,7 +351,7 @@
 
   /* ---------- pose: impilati / separati / lettura ---------- */
   var mode = 'stack', active = null, busy = false;
-  var S = { yaw: 0.95, pitch: 0.36, el: 0.38, dist: 10, look: 0, sep: 0, read: 0 };
+  var S = { yaw: 0.95, pitch: 0.36, el: 0.38, dist: 10, look: 0, sep: 0, read: 0, zoom: 1, px: 0, pz: 0 };
   libro.pose = { yaw: 0.85, pitch: 0.36 }; catalogo.pose = { yaw: 0.6, pitch: 0.42 };
   function fitDist(wide, high) {
     var a = camera.aspect, t = Math.tan(T3.MathUtils.degToRad(camera.fov / 2));
@@ -369,9 +382,9 @@
     });
     ground.position.y = (-1.6 * (1 - r)) - 0.0005;
     ground.material.opacity = 0.07 + 0.06 * r;
-    var d = S.dist, el = S.el;
-    camera.position.set(0, Math.sin(el) * d, Math.cos(el) * d);
-    camera.lookAt(0, S.look, S.look * 0.34);
+    var d = S.dist / S.zoom, el = S.el;
+    camera.position.set(S.px, Math.sin(el) * d, Math.cos(el) * d + S.pz);
+    camera.lookAt(S.px, S.look, S.look * 0.34 + S.pz);
   }
   var tweens = [];
   function tween(to, ms, done) {
@@ -395,7 +408,7 @@
     tween({ sep: 0, el: elFor('stack'), dist: distFor('stack') }, 1100, function () { busy = false; ui(); });
   }
   function toRead(b) {
-    if (busy || mode !== 'apart') return; busy = true; active = b;
+    if (busy || mode !== 'apart') return; busy = true; active = b; S.zoom = 1; S.px = S.pz = 0;
     b.pose.yaw = shortAngle(b.pose.yaw);
     mode = 'read'; ui();
     tween({ read: 1, el: elFor('read'), dist: distFor('read'), look: 0.35 }, 1150, function () {
@@ -406,10 +419,26 @@
     if (busy || mode !== 'read' || !active || active.flip) return; busy = true;
     host.classList.add('fade');
     setTimeout(function () {
-      active.reset(); S.read = 0; S.look = 0; S.el = elFor('apart'); S.dist = distFor('apart'); active = null; mode = 'apart';
+      setHD(false); active.reset(); S.read = 0; S.look = 0; S.zoom = 1; S.px = S.pz = 0; S.el = elFor('apart'); S.dist = distFor('apart'); active = null; mode = 'apart';
       host.classList.remove('fade'); busy = false; ui(); dirty = true;
     }, 320);
   }
+
+  /* ---------- ingrandimento delle pagine ---------- */
+  var ZMAX = 5;
+  function setHD(on) { if (on === hdOn) return; hdOn = on; books.forEach(function (b) { b.layout(); }); dirty = true; }
+  function clampPan() {
+    if (!active) return; var k = 1 - 1 / S.zoom, mx = active.W * 1.05 * k, mz = active.H / 2 * 1.05 * k;
+    S.px = Math.max(-mx, Math.min(mx, S.px)); S.pz = Math.max(-mz, Math.min(mz, S.pz));
+  }
+  function zoomAt(cx, cy, nz) {
+    nz = Math.max(1, Math.min(ZMAX, nz));
+    var p = planeHit({ clientX: cx, clientY: cy });
+    if (p) { var k = 1 - S.zoom / nz; S.px += (p.x - S.px) * k; S.pz += (p.z - S.pz) * k; }
+    S.zoom = nz; if (nz <= 1.001) { S.zoom = 1; S.px = S.pz = 0; }
+    clampPan(); setHD(S.zoom > 1.25); host.classList.toggle('is-zoom', S.zoom > 1.02); dirty = true;
+  }
+  function zoomed() { return mode === 'read' && S.zoom > 1.02; }
 
   /* ---------- puntatore ---------- */
   var ray = new T3.Raycaster(), ndc = new T3.Vector2(), plane = new T3.Plane(new T3.Vector3(0, 1, 0), 0), hit = new T3.Vector3();
@@ -427,8 +456,17 @@
   }
   var drag = null, cv = renderer.domElement, idle = 0, vel = { yaw: 0, pitch: 0, b: null };
   cv.style.touchAction = 'pan-y';
+  var ptrs = {}, pinch = null, clickT = 0;
+  function pinchState() { var k = Object.keys(ptrs); if (k.length < 2) return null; var a = ptrs[k[0]], b = ptrs[k[1]]; return { d: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
   cv.addEventListener('pointerdown', function (e) {
+    ptrs[e.pointerId] = { x: e.clientX, y: e.clientY };
+    if (mode === 'read' && !busy && Object.keys(ptrs).length === 2) {
+      pinch = pinchState(); pinch.z = S.zoom;
+      if (active && active.flip && !active.flip.anim) { active.flip = null; active.layout(); }
+      drag = null; return;
+    }
     drag = { x: e.clientX, y: e.clientY, moved: 0 };
+    if (zoomed()) { drag.pan = true; cv.setPointerCapture(e.pointerId); return; }
     if (mode === 'apart' && !busy) drag.book = pickBook(e);
     if (mode === 'read' && !busy && active && !active.flip) {
       var p = planeHit(e), L = active.L();
@@ -441,7 +479,15 @@
     cv.setPointerCapture(e.pointerId);
   });
   cv.addEventListener('pointermove', function (e) {
+    if (ptrs[e.pointerId]) { ptrs[e.pointerId].x = e.clientX; ptrs[e.pointerId].y = e.clientY; }
+    if (pinch) { var ps = pinchState(); if (ps && pinch.d > 0) zoomAt(ps.x, ps.y, pinch.z * ps.d / pinch.d); return; }
     if (!drag) return;
+    if (drag.pan) {
+      var r = cv.getBoundingClientRect(), wpp = 2 * Math.tan(T3.MathUtils.degToRad(camera.fov / 2)) * (S.dist / S.zoom) / r.height;
+      drag.moved += Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+      S.px -= (e.clientX - drag.x) * wpp; S.pz -= (e.clientY - drag.y) * wpp / Math.sin(S.el);
+      clampPan(); drag.x = e.clientX; drag.y = e.clientY; dirty = true; return;
+    }
     var dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.moved += Math.abs(dx) + Math.abs(dy);
     if (mode === 'stack' && !busy) {
       S.yaw += dx * 0.009; S.pitch = Math.max(-1.25, Math.min(1.35, S.pitch + dy * 0.007)); vel.yaw = dx * 0.009; vel.pitch = dy * 0.007; vel.b = null;
@@ -455,21 +501,35 @@
     idle = performance.now(); dirty = true; drag.x = e.clientX; drag.y = e.clientY;
   });
   function up(e) {
+    delete ptrs[e.pointerId]; if (pinch) { if (Object.keys(ptrs).length < 2) pinch = null; return; }
     if (!drag) return; var d = drag; drag = null;
+    if (d.pan) return;
     if (d.moved < 6) {
       if (mode === 'stack') { toApart(); return; }
       if (mode === 'apart') { var b = pickBook(e); if (b) toRead(b); return; }
       if (mode === 'read' && active) {
         if (active.flip && !active.flip.anim) { active.flip = null; active.layout(); }
-        var p = planeHit(e); if (p) step(p.x >= 0 ? 1 : -1);
+        var p = planeHit(e); if (p) { clearTimeout(clickT); clickT = setTimeout(function () { step(p.x >= 0 ? 1 : -1); }, 240); }
       }
       return;
     }
     if (mode === 'read' && active && active.flip && !active.flip.anim) active.animateFlip(active.flip.theta > Math.PI / 2 ? Math.PI : 0, 520);
   }
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('dblclick', function (e) {
+    clearTimeout(clickT);
+    if (mode !== 'read' || busy) return; e.preventDefault();
+    var from = { zoom: S.zoom, px: S.px, pz: S.pz };
+    zoomAt(e.clientX, e.clientY, S.zoom > 1.5 ? 1 : 3);
+    var to = { zoom: S.zoom, px: S.px, pz: S.pz }; S.zoom = from.zoom; S.px = from.px; S.pz = from.pz;
+    tween(to, 450);
+  });
   cv.addEventListener('wheel', function (e) {
-    if (mode === 'read' || busy) return; e.preventDefault();
+    if (mode === 'read') {
+      if (busy || (S.zoom <= 1.001 && e.deltaY > 0 && !e.ctrlKey)) return;
+      e.preventDefault(); zoomAt(e.clientX, e.clientY, S.zoom * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0025))); return;
+    }
+    if (busy) return; e.preventDefault();
     var base = distFor(mode); S.dist = Math.max(base * 0.28, Math.min(base * 1.4, S.dist * (1 + e.deltaY * 0.0012))); idle = performance.now(); dirty = true;
   }, { passive: false });
   function step(dir) {
@@ -494,7 +554,7 @@
     bp.hidden = bn.hidden = !reading;
     bp.disabled = !reading || busy; bn.disabled = !reading || (active && active.atEnd());
     bo.textContent = mode === 'stack' ? D.split : (mode === 'apart' ? D.join : D.close);
-    host.classList.toggle('is-open', reading);
+    host.classList.toggle('is-open', reading); cv.style.touchAction = reading ? 'none' : 'pan-y';
     if (hint) hint.textContent = hintFor(mode);
     sl.hidden = !reading; if (reading && active) { sl.max = active.NL; if (document.activeElement !== sl) sl.value = active.L(); }
   }
