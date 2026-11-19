@@ -149,16 +149,32 @@
     }
     var knotGeo = new T3.SphereGeometry(1, 8, 6);
     (function () {
-      var m = new T3.MeshLambertMaterial({ color: EDGE }), bands = [{ y: COV / 2 + 0.0004, r: COV / 2 + 0.0006 }], sh = BLOCK / SIGS;
-      for (var s = 0; s < SIGS; s++) bands.push({ y: COV + sh * (s + 0.5), r: sh / 2 });
-      bands.push({ y: COV + BLOCK + COV / 2 - 0.0004, r: COV / 2 + 0.0006 });
-      bands.forEach(function (b) { var mm = new T3.Mesh(halfTube(b.r, b.y), m); mm.castShadow = true; spine.add(mm); });
-      var tm = new T3.MeshLambertMaterial({ color: THREAD }), K = cfg.stations, tr = cfg.threadR || 0.0024;
+      var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+      if (cfg.wrap) {
+        // catalogo: il dorso è coperto, bianco e pulito come nelle foto
+        var Rw = (BLOCK + 2 * COV) / 2, wm = matte({ color: lin(cfg.wrap) });
+        var w = new T3.Mesh(halfTube(Rw, Rw), wm); w.scale.set(0.42 / 1.15, 1, 1); w.castShadow = true; spine.add(w);
+        return;
+      }
+      // libro: segnature cucite a vista, ognuna una piega tonda con il solco d'ombra tra l'una e l'altra
+      var sh = BLOCK / SIGS, bands = [{ y: COV / 2 + 0.0004, r: COV / 2 + 0.0006, c: true }];
+      for (var s = 0; s < SIGS; s++) bands.push({ y: COV + sh * (s + 0.5), r: sh / 2 * 0.97, dx: (rnd() - 0.5) * sh * 0.25 });
+      bands.push({ y: COV + BLOCK + COV / 2 - 0.0004, r: COV / 2 + 0.0006, c: true });
+      bands.forEach(function (b) {
+        var g = halfTube(b.r, b.y), nr = g.attributes.normal, cc = new Float32Array(nr.count * 3);
+        for (var q = 0; q < nr.count; q++) { var nx = -nr.getX(q), k = 0.62 + 0.38 * Math.pow(Math.max(0, nx), 0.8), d = 1 - k; cc[q*3] = 1 - d * 0.8; cc[q*3+1] = 1 - d * 0.92; cc[q*3+2] = 1 - d * 1.15; }
+        g.setAttribute('color', new T3.BufferAttribute(cc, 3));
+        var mm = new T3.Mesh(g, matte({ color: b.c ? PAPER : EDGE, vertexColors: true })); mm.position.x = b.dx || 0; mm.castShadow = true; spine.add(mm);
+      });
+      // il filo: a ogni stazione una catenella che lega ogni segnatura alla successiva
+      var tm = matte({ color: THREAD }), K = cfg.stations, tr = cfg.threadR || 0.0016;
       for (var k = 0; k < K; k++) {
-        var z = -H / 2 + 0.16 + (H - 0.32) * k / (K - 1), pts = [];
-        bands.forEach(function (b, i) { pts.push(new T3.Vector3(-b.r * 1.15 - tr * 0.5, b.y, z + (i % 2 ? 0.013 : -0.013))); });
-        spine.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), bands.length * 6, tr, 6, false), tm));
-        if (cfg.knot) pts.forEach(function (p, i) { if (i % 2) return; var kn = new T3.Mesh(knotGeo, tm); kn.scale.set(cfg.knot * 0.8, cfg.knot, cfg.knot * 1.3); kn.position.copy(p); kn.position.x -= cfg.knot * 0.4; spine.add(kn); });
+        var z0 = -H / 2 + 0.16 + (H - 0.32) * k / (K - 1);
+        for (var i = 0; i < bands.length - 1; i++) {
+          var A = bands[i], B = bands[i + 1], xa = -A.r * 1.15 + (A.dx || 0), xb = -B.r * 1.15 + (B.dx || 0), dz = 0.012 * (i % 2 ? 1 : -1);
+          var pts = [new T3.Vector3(xa * 0.7, A.y, z0 - dz), new T3.Vector3(Math.min(xa, xb) - tr * 1.6, (A.y + B.y) / 2, z0), new T3.Vector3(xb * 0.7, B.y, z0 + dz)];
+          spine.add(new T3.Mesh(new T3.TubeGeometry(new T3.CatmullRomCurve3(pts), 10, tr, 5, false), tm));
+        }
       }
     })();
     /* copertina aperta: nella piega si vede il dorso cucito — le segnature come bastoncini tondi,
@@ -258,14 +274,14 @@
       R.set(hr, rTop ? tex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? tex(lTop) : null, null);
       me.want = { l: lTop ? tex(lTop) : null, r: rTop ? tex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
-      var gk = 0;                                         // quanto è aperta la piega cucita (0 chiusa, 1 copertina aperta sulla prima pagina)
+      var gk = 0; if (false)                             // quanto è aperta la piega cucita (0 chiusa, 1 copertina aperta sulla prima pagina)
       if (me.opened) {
         if (!f) gk = L === 1 ? 1 : 0;
         else if (f.leaf === 0) gk = f.theta / Math.PI;
         else if (f.leaf === 1) gk = 1 - f.theta / Math.PI;
       }
       Lft.mesh.position.x = -G * gk; Lft.bottom.position.x = -W / 2 - G * gk;
-      rods.visible = gk > 0.002; rods.scale.set(Math.max(gk, 0.002), 1, 1);
+      rods.visible = false;
       spine.visible = !me.opened && L === 0 && !f;
       if (f) {
         leafGroup.visible = true;
@@ -314,8 +330,8 @@
   }
 
   /* ---------- i due volumi ---------- */
-  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#bdb8ae', sigs: 13, stations: 11, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
-  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', rodColor: '#d9d2c3', threadR: 0.0032, knot: 0.0074, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var libro = new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
+  var catalogo = new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = [libro, catalogo];
   stackGroup.add(libro.root, catalogo.root);
 
