@@ -346,7 +346,7 @@
 
   /* ---------- i due volumi ---------- */
   var libro = single
-    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp' })
+    ? new Book({ name: D.nameLibro, base: D.base, pages: +D.pages, w: +D.w, h: +D.h, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 1, stations: 3, rod: 0.0028, leaf: +D.leaf || 0.0011, cov: +D.cov || 0.0035, cover: 'cover.webp', back: 'cover-back.webp', inner: 'cover-inner.webp' })
     : new Book({ name: D.nameLibro, base: D.base, pages: 208, paper: '#f1ede3', edge: '#ebe6da', thread: '#ece9e1', sigs: 13, stations: 6, rod: 0.0028, leaf: 0.0011, cov: 0.0035, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var catalogo = single ? null : new Book({ name: D.nameCat, base: D.cat, pages: 80, w: 2.425, h: 3.20, paper: '#f6f5f1', edge: '#efeee9', thread: '#f8f6f1', wrap: '#fbfbf9', rodColor: '#d9d2c3', threadR: 0.0032, rod: 0.011, sigs: 5, stations: 11, leaf: 0.0013, cov: 0.0045, cover: 'cover.webp?v=2', back: 'cover-back.webp?v=2' });
   var books = single ? [libro] : [libro, catalogo];
