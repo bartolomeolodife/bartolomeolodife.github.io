@@ -163,12 +163,19 @@
       var seed = 11; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
       if (cfg.saddle) {
         // fanzine a punto metallico: un solo fascicolo piegato, dorso tondo di carta e due punti d'acciaio come nelle foto
-        var Rs = (BLOCK + 2 * COV) / 2, sx = 0.55;
+        var Rs = (BLOCK + 2 * COV) / 2, sx = 1 / 1.15;   // piega a semicerchio pieno: dorso tondo come la fanzine vera
         var fold = new T3.Mesh(halfTube(Rs, Rs), matte({ color: new T3.Color(PAPER).multiplyScalar(1.06), side: T3.DoubleSide })); fold.scale.set(sx, 1, 1); fold.castShadow = true; spine.add(fold);
         var steel = new T3.MeshPhongMaterial({ color: 0x7f8388, specular: 0xbfc3c8, shininess: 90 });
         [-1, 1].forEach(function (k) {
-          var st = new T3.Mesh(new T3.CylinderGeometry(0.0028, 0.0028, H * 0.042, 8), steel); st.rotation.x = Math.PI / 2;   // filo d'acciaio di circa mezzo millimetro, lungo 12 mm
-          st.position.set(-Rs * sx * 1.15 - 0.0012, Rs, k * H * 0.37); spine.add(st);
+          // filo d'acciaio di circa mezzo millimetro, lungo 12 mm: la corona corre sul dorso e piega tonda dentro la carta alle due estremità
+          var hl2 = H * 0.021, rc = 0.006, dep = 0.012, V = T3.Vector3, path = new T3.CurvePath();
+          path.add(new T3.LineCurve3(new V(dep, 0, -hl2), new V(rc, 0, -hl2)));
+          path.add(new T3.QuadraticBezierCurve3(new V(rc, 0, -hl2), new V(0, 0, -hl2), new V(0, 0, -hl2 + rc)));
+          path.add(new T3.LineCurve3(new V(0, 0, -hl2 + rc), new V(0, 0, hl2 - rc)));
+          path.add(new T3.QuadraticBezierCurve3(new V(0, 0, hl2 - rc), new V(0, 0, hl2), new V(rc, 0, hl2)));
+          path.add(new T3.LineCurve3(new V(rc, 0, hl2), new V(dep, 0, hl2)));
+          var st = new T3.Mesh(new T3.TubeGeometry(path, 48, 0.0026, 10, false), steel);
+          st.position.set(-Rs * sx * 1.15 - 0.0010, Rs, k * H * 0.37); spine.add(st);
         });
         return;
       }
