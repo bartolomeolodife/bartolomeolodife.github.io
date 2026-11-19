@@ -78,8 +78,8 @@
     this.root.add(this.pivot); this.pivot.add(this.geo);
     var book = this.geo;
     function pageName(p) { return cfg.base + ('00' + p).slice(-3) + '.webp'; }
-    function rectoOf(l) { return l === 0 ? cfg.base + cfg.cover : (l <= NP / 2 ? pageName(2 * l - 1) : null); }
-    function versoOf(l) { return l === 0 ? (cfg.inner ? cfg.base + cfg.inner : null) : (l <= NP / 2 ? pageName(2 * l) : null); }
+    function rectoOf(l) { return l === 0 ? cfg.base + cfg.cover : (l <= NP / 2 ? pageName(2 * l - 1) : (l === NL && cfg.backInner ? cfg.base + cfg.backInner : null)); }
+    function versoOf(l) { return l === 0 ? (cfg.inner ? cfg.base + cfg.inner : null) : (l <= NP / 2 ? pageName(2 * l) : (l === NL && cfg.backInner ? cfg.base + cfg.back : null)); }
     function matte(o) { o.specular = 0x000000; o.shininess = 0; return new T3.MeshPhongMaterial(o); }   // carta opaca, luce calcolata per pixel: niente bande sul foglio curvo
     function matPaper(side) { return new T3.MeshLambertMaterial({ color: PAPER, side: side || T3.FrontSide }); }
     var WHITE = new T3.Color(0xffffff);
@@ -278,13 +278,13 @@
 
     /* stato */
     var L = 0; this.opened = false; this.flip = null;
-    function heights(l) { return { left: l > 0 ? COV + (l - 1) * LEAF : 0, right: (NL - l) * LEAF + (l === 0 ? COV - LEAF : 0) + COV }; }
+    function heights(l) { if (l > NL) return { left: 2 * COV + (NL - 1) * LEAF, right: 0 }; return { left: l > 0 ? COV + (l - 1) * LEAF : 0, right: (NL - l) * LEAF + (l === 0 ? COV - LEAF : 0) + COV }; }
     this.heights = heights;
     function layout() {
       var f = me.flip, showL = f ? Math.min(L, f.leaf) : L, showR = f ? Math.max(L, f.leaf + 1) : L;
       var hl = heights(showL).left, hr = heights(showR).right;
-      CURVE = me.opened ? 1 : 0; curH.l = hl; curH.r = hr;
-      var rTop = showR < NL ? rectoOf(showR) : (cfg.backInner ? cfg.base + cfg.backInner : null), lTop = showL > 0 ? versoOf(showL - 1) : null;
+      CURVE = me.opened && !(L > NL && !f) ? 1 : 0;   // richiuso sul retro: niente curva della piega curH.l = hl; curH.r = hr;
+      var rTop = showR < NL ? rectoOf(showR) : (showR === NL && cfg.backInner ? cfg.base + cfg.backInner : null), lTop = showL > 0 ? versoOf(showL - 1) : null;
       R.set(hr, rTop ? pageTex(rTop) : null, cfg.back ? tex(cfg.base + cfg.back, true) : null);
       Lft.set(hl, lTop ? pageTex(lTop) : null, null);
       me.want = { l: lTop ? pageTex(lTop) : null, r: rTop ? pageTex(rTop) : null }; me.have = function () { return { l: Lft.mTop.map, r: R.mTop.map }; };
@@ -322,7 +322,7 @@
     };
     this.turn = function (dir, ms, done) {
       if (!me.opened || me.flip) return false;
-      if (dir > 0 && L >= NL) return false; if (dir < 0 && L <= 1) return false;
+      if (dir > 0 && L >= me.maxL) return false; if (dir < 0 && L <= 1) return false;
       var leaf = dir > 0 ? L : L - 1;
       me.flip = { leaf: leaf, theta: dir > 0 ? 0 : Math.PI, grabZ: 0.35 }; layout();
       me.animateFlip(dir > 0 ? Math.PI : 0, ms || 900, done); return true;
@@ -334,12 +334,14 @@
     };
     this.label = function () {
       if (!me.opened) return cfg.name;
+      if (L > NL) return D.retro || cfg.name;
       var lp = L >= 2 ? 2 * (L - 1) : null, rp = L <= NP / 2 ? 2 * L - 1 : (cfg.backInner ? NP + 1 : null);
       if (lp && rp) return D.pn + ' ' + lp + '–' + rp;
       return D.p1 + ' ' + (lp || rp);
     };
-    this.atEnd = function () { return L >= NL; };
-    this.goTo = function (l) { l = Math.max(1, Math.min(NL, l | 0)); if (l === L && !me.flip) return; me.flip = null; L = l; layout(); };
+    this.maxL = cfg.backInner ? NL + 1 : NL;                    // con il retro: l'ultima pagina gira e il libro si richiude sul retro
+    this.atEnd = function () { return L >= me.maxL; };
+    this.goTo = function (l) { l = Math.max(1, Math.min(me.maxL, l | 0)); if (l === L && !me.flip) return; me.flip = null; L = l; layout(); };
     this.setCenter = function (k) { book.position.set(-W / 2 * (1 - k), -(1 - k) * me.T / 2, 0); };
     layout();
   }
@@ -477,7 +479,7 @@
       var p = planeHit(e), L = active.L();
       var aW = active.W, aH = active.H;
       if (p && Math.abs(p.z) < aH / 2) {
-        if (p.x > aW * 0.08 && L < active.NL) drag.leaf = { leaf: L, dir: 1, gz: p.z / (aH / 2) };
+        if (p.x > aW * 0.08 && L < active.maxL) drag.leaf = { leaf: L, dir: 1, gz: p.z / (aH / 2) };
         else if (p.x < -aW * 0.08 && L > 1) drag.leaf = { leaf: L - 1, dir: -1, gz: p.z / (aH / 2) };
       }
     }
@@ -545,7 +547,11 @@
     if (mode !== 'read' || !active || busy) return;
     if (dir < 0 && active.L() <= 1) { closeRead(); return; }
     if (active.flip) { queued = dir; return; }               // clic durante il giro: la pagina dopo parte appena finisce
-    active.turn(dir, 700, function () { if (queued) { var q = queued; queued = 0; requestAnimationFrame(function () { step(q); }); } });
+    var b = active, wasEnd = b.L() > b.NL;
+    if (wasEnd && dir < 0 && S.zoom <= 1.001) tween({ px: 0 }, 600);
+    active.turn(dir, 700, function () {
+      if (b === active && b.L() > b.NL && S.zoom <= 1.001) tween({ px: -b.W / 2 }, 600);   // il volume richiuso va al centro
+      if (queued) { var q = queued; queued = 0; requestAnimationFrame(function () { step(q); }); } });
   }
   var queued = 0;
 
@@ -571,7 +577,7 @@
   }
   sl.addEventListener('input', function () {
     if (mode !== 'read' || !active || busy) return;
-    scrubTo = Math.max(1, Math.min(active.NL, +sl.value)); lab.textContent = active.label();
+    scrubTo = Math.max(1, Math.min(active.maxL, +sl.value)); lab.textContent = active.label();
     if (!scrubbing) pump();
   });
   function hintFor(m) { var h = D['hint' + m[0].toUpperCase() + m.slice(1)] || ''; if (coarse) h = h.split(' · ').filter(function (s) { return !/rotella|scroll|molette/i.test(s); }).join(' · '); return h; }
@@ -583,7 +589,7 @@
     bo.textContent = mode === 'stack' ? D.split : (mode === 'apart' ? D.join : D.close);
     host.classList.toggle('is-open', reading); cv.style.touchAction = reading ? 'none' : 'pan-y';
     if (hint) hint.textContent = hintFor(mode);
-    sl.hidden = !reading; if (reading && active) { sl.max = active.NL; if (document.activeElement !== sl) sl.value = active.L(); }
+    sl.hidden = !reading; if (reading && active) { sl.max = active.maxL; if (document.activeElement !== sl) sl.value = active.L(); }
   }
   bp.addEventListener('click', function () { step(-1); });
   bn.addEventListener('click', function () { step(1); });
