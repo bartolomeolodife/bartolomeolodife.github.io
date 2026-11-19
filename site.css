@@ -149,7 +149,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,[tabindex]:focus-visibl
 @media (max-width:700px){.specimen-meta{grid-template-columns:1fr auto}.specimen-meta span:nth-child(2){display:none}.specimen-text{font-size:20px}}
 @media (max-width:700px){.specimen-text a{white-space:normal}}
 html.dotcursor, html.dotcursor *{cursor:none !important}
-.dot{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:9999;opacity:0;transition:opacity .2s}
+.dot{position:fixed;left:0;top:0;width:0;height:0;pointer-events:none;z-index:10001;opacity:0;transition:opacity .2s}
 .dot.on{opacity:1}
 .dot::before{content:"";position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;background:#fff;mix-blend-mode:difference;transition:transform .18s cubic-bezier(.2,.8,.2,1)}
 .dot{mix-blend-mode:difference}

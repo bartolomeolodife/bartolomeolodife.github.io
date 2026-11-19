@@ -6,7 +6,7 @@
 <title>Bartolomeo Lodi-Fè, portfolio di design</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="site.css?v=55">
+<link rel="stylesheet" href="site.css?v=56">
 
 <meta name="description" content="Bartolomeo Lodi-Fè, studente di design a ISIA Roma Design. Portfolio di prodotto e comunicazione: Folia, Trabucco, Trattato del ribelle, Matrice, Percorso espositivo, Via di Fuga.">
 <link rel="canonical" href="https://bartolomeolodife.github.io/">
@@ -38,12 +38,14 @@ html.intro body{overflow:hidden}
 .intro-dot:hover::before,.intro-dot:focus-visible::before{animation:none;transform:scale(1.6)}
 .intro-dot:focus-visible{outline:none}
 @keyframes introPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45)}}
-html.intro-go .intro-dot{display:none}
+html.intro-go .intro-dot,html.intro-go .intro-lab{display:none}
+.intro-v{cursor:pointer}
+.intro-lab{position:absolute;left:50%;top:50%;margin-top:40px;transform:translateX(-50%);font-size:12px;letter-spacing:.02em;color:#8a8a8a;white-space:nowrap;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.intro-dot::before{animation:none}}
 </style>
 </head>
 <body>
-<div class="intro-v" id="intro"><button type="button" class="intro-dot" aria-label="Entra nel sito"></button></div>
+<div class="intro-v" id="intro"><button type="button" class="intro-dot" aria-label="Entra nel sito"></button><span class="intro-lab" aria-hidden="true">Clicca qui</span></div>
 <div class="site">
 <header class="rule top"><a href="index.html">Bartolomeo Lodi-Fè</a><span class="mid">Studente di design, <a href="https://www.isiaroma.it" target="_blank" rel="noopener">ISIA Roma Design</a></span><nav><a href="index.html" aria-current="page">Progetti</a><a href="come-lavoro.html">Come lavoro</a><a href="percorso.html">Percorso</a><a href="percorso.html#contatti">Contatti</a><span class="lang"><a href="index.html" hreflang="it" lang="it" aria-current="true">IT</a><a href="en/index.html" hreflang="en" lang="en">EN</a><a href="fr/index.html" hreflang="fr" lang="fr">FR</a></span></nav></header>
 <main class="home">
@@ -118,11 +120,11 @@ function open(){if(root.classList.contains('intro-go'))return;root.classList.add
  v.style.setProperty('--r','9px');
  function f(t){if(t0===null)t0=t;var k=Math.min(1,(t-t0)/D),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;v.style.setProperty('--r',(9+(R-9)*e)+'px');if(k<1)requestAnimationFrame(f);else{root.classList.remove('intro','intro-go');v.remove()}}
  requestAnimationFrame(f);}
-b.addEventListener('click',open);document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')open()},{once:true});})();
+v.addEventListener('click',open);document.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' ')open()},{once:true});})();
 </script>
 <footer class="rule bottom"><span>Portfolio 2026</span><span class="mid">Roma</span><span>Bartolomeo Lodi-Fè</span></footer>
 </div>
-<script src="site.js?v=55"></script>
+<script src="site.js?v=56"></script>
 <script data-goatcounter="https://bartolomeolodife.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script id="autoscroll">
 (function(){var r=document.getElementById('prow');if(!r)return;
